@@ -17,7 +17,7 @@ dir = '/home/amber/OneDrive/code/git_nAdaptation_ECoG/'
 
 # user-defined values (ONLY CHANGE CODE HERE)
 subjects = ['sub-p11', 'sub-p12', 'sub-p13', 'sub-p14']
-threshold_d_prime = 0.5
+threshold_d_prime = 1.0
 threshold_cv = 0.2
 
 # predefined variables
@@ -70,17 +70,17 @@ for subject in subjects:
         # print progress
         print('Computing response of electrode ' + subject + ', ' + electrode_name + '... (' + str(i+1) + '/' + str(len(channels))+ ')')
 
-        # compute mean signal for one and two pulses
+        # INCLUSION CRITERION 1: d' indicating category-selectivity
         d_prime = d_prime_perImgCat(epochs_b, event_idx, stim)
         preferred_cat_idx = np.argmax(d_prime)
         nonpreferred_cat_idx = np.argmin(d_prime)
 
-        # select onepulse trials per image category
-        epochs_onepulse = epochs_b.iloc[:, event_idx[0][nonpreferred_cat_idx]]
-        epochs_mean_onepulse = np.nanmean(epochs_b.iloc[:, event_idx[0][nonpreferred_cat_idx]], axis=1)
+        # INCLSUION CRRITERION 2: Stimulus-onset Latency
+        epochs_onepulse = epochs_b.iloc[:, event_idx[nonpreferred_cat_idx]]
+        epochs_mean_onepulse = epochs_b.iloc[:, event_idx[nonpreferred_cat_idx]].mean(axis=1)
         onset_onepulse, onset_timepts_onepulse, onset = stimulus_onset(t, epochs_mean_onepulse, dir)
 
-        # compute CV for nonpreferred image category
+        # INCLUSION CRITERIUM 3: Coefficient of variation (CV)
         std = epochs_onepulse.loc[start+onset_timepts_onepulse:end, :].std(axis=1)
         mean = epochs_onepulse.loc[start+onset_timepts_onepulse:end, :].mean(axis=1)
         cv = np.mean(mean/std)

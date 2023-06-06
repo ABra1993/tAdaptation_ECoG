@@ -1,10 +1,7 @@
-#%%
-
 # required packages
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
 
 from utils import stimulus_onset, select_events
 
@@ -148,7 +145,7 @@ for subject in subjects:
             count+=1
 
 # save dataframe
-df.to_csv(dir+'subject_data/electrodes_visualResponsive.txt', index=True, sep=' ')
+df.to_csv(dir+'subject_data/electrodes_visuallyResponsive.txt', index=True, sep=' ')
 
 # print count
 print(count, ' electrodes selected!')

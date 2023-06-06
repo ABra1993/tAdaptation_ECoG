@@ -20,7 +20,7 @@ def paramInit(model):
 
     values based on irisgroen/temporalECoG:
 
-    "params": " t1,     w,      t2,     n,      sigma,      shift,      scale",
+    "params": " t1      t2,     n,      sigma,      shift,      scale",
 	"x0": [     0.005,  0,      0.07,   1.5,    0.15,       0.06,       2],
 	"lb": [     0.001,  0,      0.01,   1,      0,          0,          0.01],
 	"ub": [     1,      1,      2,      5,      1,          0.1,        200],
