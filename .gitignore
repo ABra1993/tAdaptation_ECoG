@@ -1,4 +1,5 @@
-subject_data/*
-dataSelection/__pycache__
-computationalModelling/__pycache__
-computationalModelling/modelFit
+subject_data
+mkFigure
+modelFit
+__pycache__
+models/__pycache__

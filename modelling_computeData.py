@@ -17,25 +17,33 @@ Description: creates a pandas DataFrame holidng the samples (72 time courses) th
 # define root directory
 dir = '/home/amber/OneDrive/code/git_nAdaptation_ECoG/'
 
+##### SPECIFY ELECTRODE TYPE
+electrode_type = 'visuallyResponsive'
+# electrode_type = 'categorySelective'
+
 # import variables
-img_cat     = np.loadtxt(dir+'variables/cond_stim.txt', dtype=str)
-temp_cond   = np.loadtxt(dir+'variables/cond_temp.txt', dtype=int)
-t           = np.loadtxt(dir+'variables/t.txt', dtype=float)
-t_index     = np.arange(len(t)).astype(str).tolist()
+img_cat             = np.loadtxt(dir+'variables/cond_stim.txt', dtype=str)
+temp_cond           = np.loadtxt(dir+'variables/cond_temp.txt', dtype=int)
+temp_cond_index     = np.arange(len(temp_cond)).astype(str).tolist()
+t                   = np.loadtxt(dir+'variables/t.txt', dtype=float)
+t_index             = np.arange(len(t)).astype(str).tolist()
 
 # assign trials
 trial_type = ['onepulse', 'twopulse_repeat']
 
 # import electrodes
-responsive_electrodes = pd.read_csv(dir+'subject_data/electrodes_categorySelective_0-5.txt', header=0, index_col=0, delimiter=' ')
+if electrode_type == 'visuallyResponsive':
+    responsive_electrodes = pd.read_csv(dir+'subject_data/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
+elif electrode_type == 'categorySelective':
+     responsive_electrodes = pd.read_csv(dir+'subject_data/electrodes_categorySelective_0-5.txt', header=0, index_col=0, delimiter=' ')
 n_electrodes = len(responsive_electrodes)
 
 # create dataframe
 df = pd.DataFrame(columns=['trial_type', 'img_cat', 'temp_cond'] + t_index)
 df['trial_type'] = np.repeat(trial_type, len(img_cat)*len(temp_cond))
 df['img_cat'] = np.tile(np.repeat(img_cat, len(temp_cond)), 2)
-df['temp_cond'] = np.tile(temp_cond, len(trial_type)*len(img_cat))
-print(df)
+df['temp_cond'] = np.tile(temp_cond_index, len(trial_type)*len(img_cat))
+# print(df)
 
 # retrieve info
 current_subject = ''
@@ -43,19 +51,19 @@ for i in range(n_electrodes):
 # for i in range(1):
 
     # defines electrode and subject
-    subject = responsive_electrodes.loc[i, 'subject']
-    electrode_name = responsive_electrodes.loc[i, 'electrode']
-    electrode_idx = int(responsive_electrodes.loc[i, 'electrode_idx'])
+    subject                     = responsive_electrodes.loc[i, 'subject']
+    electrode_name              = responsive_electrodes.loc[i, 'electrode']
+    electrode_idx               = int(responsive_electrodes.loc[i, 'electrode_idx'])
 
     # print progress
     print('Computing trials for ' + subject + ', electrode ' + electrode_name + ' (' + str(i+1) + '/' + str(n_electrodes) + ')')
 
     # ----------------------------------------------------------- 
     try: # create electrode directory to store data
-        os.mkdir(dir+'computationalModelling/modelFit/categorySelective/' + subject + '_' + electrode_name)
+        os.mkdir(dir+'modelFit/' + electrode_type + '/' + subject + '_' + electrode_name)
     except:
         print('Folder for electrode already exist...')
-    # ----------------------------------------------------------- 
+    # -----------------------------------------------------------
 
     if subject != current_subject:
 
@@ -96,4 +104,4 @@ for i in range(n_electrodes):
                     count = count + 1
 
     # save dataframe
-    df_current_electrode.to_csv(dir+'computationalModelling/modelFit/categorySelective/' + subject + '_' + electrode_name + '/data.txt', sep=' ', index=False)
+    df_current_electrode.to_csv(dir+'modelFit/' + electrode_type + '/' + subject + '_' + electrode_name + '/data.txt', sep=' ', index=False)

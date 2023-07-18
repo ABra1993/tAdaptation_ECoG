@@ -17,16 +17,6 @@ def paramInit(model):
     ub : float
         array containing the upper bound values of the model parameters
 
-
-    values based on irisgroen/temporalECoG:
-
-    "params": " t1      t2,     n,      sigma,      shift,      scale",
-	"x0": [     0.005,  0,      0.07,   1.5,    0.15,       0.06,       2],
-	"lb": [     0.001,  0,      0.01,   1,      0,          0,          0.01],
-	"ub": [     1,      1,      2,      5,      1,          0.1,        200],
-	"plb": [0.01,0,0.1,1.5,0.01,0.01,0.5],
-	"pub": [0.9,0.5,1,3,0.5,0.08,100]
-
     """
 
     if model == 'csDN':

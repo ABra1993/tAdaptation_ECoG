@@ -1,9 +1,10 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 from models.Models_DN import Models_DN
 from models.Models_csDN import Models_csDN
 
-def objective_DN(params, X, y, sample_rate, model):
+def objective_DN(params, X, y, sample_rate):
     """ Objective function used to train the Delayed Normalization (DN) model. It iterates over the input
         samples and returns the loss (i.e. Mean Squared Error, MSE)
 
@@ -32,7 +33,7 @@ def objective_DN(params, X, y, sample_rate, model):
     for i in range(len(X)):
 
         # simulate model
-        model_run = model_DN(X[i, :], sample_rate, params, model)
+        model_run = model_DN(X[i, :], sample_rate, params)
 
         # compute cost
         fit = fit + np.sum((model_run - y[i, :])**2)
@@ -124,12 +125,12 @@ def objective_csDN(params, X, y, info, sample_rate, dir):
     for i in range(len(X)):
 
         # retrieve trial and condition
-        trial = info.loc[i, 'trial']
-        cond = int(info.loc[i, 'ISI'])
+        trial = info.loc[i, 'trial_type']
+        cond = int(info.loc[i, 'temp_cond'])
         cat = info.loc[i, 'img_cat']
 
         # simulate model
-        _, model_run = model_cdDN(X[i, :], trial, cond, cat, sample_rate, params, dir)
+        _, model_run = model_csDN(X[i, :], trial, cond, cat, sample_rate, params, dir)
 
         # compute cost
         fit = fit + np.sum((model_run - y[i, :])**2)
@@ -137,7 +138,7 @@ def objective_csDN(params, X, y, info, sample_rate, dir):
     return fit
 
 
-def model_cdDN(stim, trial, cond, cat, sample_rate, params, dir, denom=False):
+def model_csDN(stim, trial, cond, cat, sample_rate, params, dir, denom=False):
     """ Initiates the Category-based Delayed Normalization (CbDN) model and computes the predicted response by the model.
 
     params
@@ -209,3 +210,30 @@ def model_cdDN(stim, trial, cond, cat, sample_rate, params, dir, denom=False):
         return stim_adapt, linear_rectf_exp_norm_delay, linear_rectf_exp, demrsp
     else:
         return stim_adapt, linear_rectf_exp_norm_delay
+    
+
+def OF_ISI_recovery_log(t, c, a):
+    """ Linear fitting curve
+
+    params
+    -----------------------
+    t : array (1xT-dimensional) or scalar
+        table/scalar containing timepoint(s)
+    b, c : scalar
+        model parameters to be fitted
+
+    returns
+    -----------------------
+    function : scalar
+        value of function at timepoints t with parameters a, b and c.
+
+    """
+
+    y = c + a * np.log(t)
+
+    return y
+
+    
+
+
+
