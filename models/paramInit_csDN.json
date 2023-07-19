@@ -1,6 +1,0 @@
-{
-	"params": "tau, tau_a, shift, n, sigma, scale, sf_bodies, sf_buildings, sf_faces, sf_objects, sf_scenes, sf_scrambled",
-	"x0": 	[0.01, 	0.07,	30,		1.5,	0.15,	2,		2, 		2, 		2, 		2, 		2, 		2	],
-	"lb": 	[0.001,	0.01,	0,		0.1,	0,		0.01,	0.01, 	0.01, 	0.01, 	0.01, 	0.01, 	0.01],
-	"ub": 	[1,		2,		70,		5,		1,		200,	200, 	200, 	200,	200,	200,	200	]
-}
