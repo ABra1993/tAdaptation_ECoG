@@ -9,17 +9,29 @@ from mne.io.constants import FIFF
 
 
 """
+
 Author: A. Brands
 
-Description:
-
 """
+
+############################################################################################## ADAPT CODE HERE
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
 
 # define root directory
 # dir = '/home/amber/OneDrive/code/git_nAdaptation_ECoG/'
 dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
+
+# define Freesurfer directory
 # dir_surfdrive = '/home/amber/ownCloud/Shared/ECoG_data/data/derivatives/freesurfer/'
 dir_surfdrive = '/Users/a.m.brandsuva.nl/surfdrive/Shared/ECoG_data/data/derivatives/freesurfer/'
+
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+
 
 # views to save the plots
 view = ['lat', 'ven', 'caudal']
@@ -106,6 +118,9 @@ for i in range(n_electrodes):
             brain.add_foci(xyz, hemi='lh', color=RGB_cat[2], scale_factor=s)
     else:
         brain.add_foci(xyz, hemi='lh', color='black', scale_factor=s_small)
+
+
+print(count_VA)
 
 for v in view:
     brain.show_view(v, distance=350)

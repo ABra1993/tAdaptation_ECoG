@@ -16,18 +16,29 @@ from modelling_utils_fitObjective import model_csDN, model_DN, OF_ISI_recovery_l
 
 
 """
+
 Author: A. Brands
 
-Outputs: matplotlib figure (2x)
-
-Description: Creates Figure 3 of the paper.
-
 """
+
+############################################################################################## ADAPT CODE HERE
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
 
 # define root directory
 # dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
 dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
 
+# import info responsive electrodes showing category-selectivity
+threshold_d_prime = 0.5
+# threshold_d_prime = 0.75
+# threshold_d_prime = 1.0
+
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
 
 # import timepoints of on- and offset of stimulus for one and twopulse trials
 t                         = np.loadtxt(dir+'variables/t.txt', dtype=float)
@@ -109,7 +120,6 @@ subtrials = ['preferred', 'non-preferred']
 color_cat = ['dodgerblue', 'crimson']
 
 # import info responsive electrodes showing category-selectivity
-threshold_d_prime = 0.5
 responsive_electrodes = pd.read_csv(dir+'subject_data/electrodes_categorySelective_' + str(threshold_d_prime).replace('.', '-') + '.txt', header=0, index_col=0, delimiter=' ')
 responsive_electrodes = responsive_electrodes[responsive_electrodes.preferred_cat != 'SCRAMBLED']
 responsive_electrodes.reset_index(drop=True, inplace=True)
