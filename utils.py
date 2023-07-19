@@ -7,14 +7,14 @@ import pandas as pd
 
 
 def import_info(subject, dir):
-    """ Returns info of the data.
+    """ Returns experimental info of the subject.
 
     params
     -----------------------
     subject : string
         indicates subject
     dir : string
-        indicates root directory (to save figure)
+        indicates root directory
 
     returns
     -----------------------
@@ -44,15 +44,15 @@ def import_epochs(subject, electrode_idx, dir):
     -----------------------
     subject : string
         indicates subject
-    electrode_idx : DataFrame dim(n) (optional)
-        contains index number of specified electrode (n)
+    electrode_idx : int
+        contains index number of specified electrode
     dir : string
-        indicates root directory (to save figure)
+        indicates root directory
 
     returns
     -----------------------
     epochs_b : array dim(n, T)
-        contains the broadband data (n) for each event
+        contains the broadband data for each event (n) and timepiont (T)
 
         """
 
@@ -80,7 +80,7 @@ def select_electrodes(channels, electrode_name):
         returns
         -----------------------
         electrode_idx : DataFrame dim(1)
-            contains index number of specified electrode
+            contains index number of specified electrode(s)
     """
 
     electrode_idx = []
@@ -103,22 +103,24 @@ def select_electrodes(channels, electrode_name):
     return electrode_idx
 
 def select_events(events, cond, trial, dir):
-    """ Returns list of the visual areas measured
+    """ Returns index of events for either duration or repetition trials (per experimental condition).
 
     params
     -----------------------
     events : array dim(n , m)
         contains the events (n) with additional info (m)
     cond : string ('TEMP', 'STIM')
-        indicates the type of conditions (either temporal - TEMP - or img. cat. - STIM)
+        indicates the type of experimental manipulations 
+            - temporal ('TEMP') by ISI (for repetition trials) or stimulus duration (for duration trials) 
+            - stimulus ('STIM') by image category
     trial : string
         indicates type of trial (e.g. 'onepulse')
     dir : string
-        indicates root directory (to save figure)
+        indicates root directory
 
     returns
     -----------------------
-    event_idx : array dim(1, n)
+    event_idx : nested list
         contains the index numbers for the events belonging to one experimental condition
 
     """
@@ -278,34 +280,23 @@ def select_events(events, cond, trial, dir):
         return event_idx
 
 def select_events_durationTrials(events, tempCond, preference, cat=None):
-    """ Returns index of events and the corresponding broadband data for repeat
-        trials.
+    """ Returns index of events for duration trials per temporal condition.
 
     params
     -----------------------
     events : array dim(n , m)
         contains the events (n) with additional info (m)
-    preferred_cat : string
-        preferred category for given cluster
-    preferred_cat_index_all :
-
-    stim_index : int array dim(n, m)
-        contains image indices per image category; min (n), and max (m) index
-    ISI : float
-        array containing the ISI values
-    epochs_b : pandas df
-        contains broadband data per trial for one electrode
-    data_repeat_p :
-        contains broadband data for repeat triasl for preferred category (highest d')
-    i : integer
-        electrode index
-
+    tempCond: list float
+        list containing the stimulus durations for duration trials ([17, 33, 67, 133, 267, 533])
+    preference: int
+        0 including ALL trials, 1 including PREFERRED trials or 2 including NON-PREFERRED trials
+    cat: string list
+        includes preferred and non-preferred image category (e.g. [FACES, SCENES])
+        
     returns
     -----------------------
-    event_idx1 : list int
-        contains trials indices used to compute ISI recovery
-    data_repeat_p : array
-        contains broadband data of repeat trials with preferred image category
+    event_idx : nested list
+        contains the index numbers for the events belonging to one experimental condition
 
     """
 
@@ -339,34 +330,23 @@ def select_events_durationTrials(events, tempCond, preference, cat=None):
     return event_idx
 
 def select_events_repetitionTrials(events, ISI, preference, cat=None):
-    """ Returns index of events and the corresponding broadband data for repeat
-        trials.
+    """ Returns index of events for repetition trials per temporal condition.
 
     params
     -----------------------
     events : array dim(n , m)
         contains the events (n) with additional info (m)
-    preferred_cat : string
-        preferred category for given cluster
-    preferred_cat_index_all :
-
-    stim_index : int array dim(n, m)
-        contains image indices per image category; min (n), and max (m) index
-    ISI : float
-        array containing the ISI values
-    epochs_b : pandas df
-        contains broadband data per trial for one electrode
-    data_repeat_p :
-        contains broadband data for repeat triasl for preferred category (highest d')
-    i : integer
-        electrode index
-
+    tempCond: list float
+        list containing the ISI for repetition trials ([17, 33, 67, 133, 267, 533])
+    preference: int
+        0 including ALL trials, 1 including PREFERRED trials or 2 including NON-PREFERRED trials
+    cat: string list
+        includes preferred and non-preferred image category (e.g. [FACES, SCENES])
+        
     returns
     -----------------------
-    event_idx1 : list int
-        contains trials indices used to compute ISI recovery
-    data_repeat_p : array
-        contains broadband data of repeat trials with preferred image category
+    event_idx : nested list
+        contains the index numbers for the events belonging to one experimental condition
 
     """
 
@@ -449,7 +429,7 @@ def select_events_repetitionTrials(events, ISI, preference, cat=None):
     return event_idx
 
 def stimulus_onset(t, data, dir):
-    """ Computes metrics for the different conditions (e.g. ISI, stim duration).
+    """ Computes stimulus onset of the neural response (from the start of the stimulus presentation).
 
     params
     -----------------------
@@ -457,6 +437,8 @@ def stimulus_onset(t, data, dir):
         contains timepoints for one trial
     data : array dim(1, T)
         data
+    dir : string
+        indicates root directory
 
     returns
     -----------------------
@@ -465,7 +447,7 @@ def stimulus_onset(t, data, dir):
     idx_first : int
         contains response onset (in timepoints) relative to start of stimulus
     is_onset: Bool
-        indicated whether there is a ROL present (True, else False)
+        indicated whether there is a ROL detected (True, else False)
 
     """
 
@@ -523,10 +505,6 @@ def estimate_first_pulse(t, epochs_b, event_idx, timepoints_twopulse):
         contains the index numbers for the events belonging to one experimental condition
     timepoints_twopulse : array dim(n, m)
         timepoints of stimulus on- and offset(m) for the different ISIs (n)
-    subject : string
-        indicates subject
-    electrode_name : string (optional)
-        indicates name of electrode for which index should be determined.
 
     returns
     -----------------------
@@ -562,7 +540,7 @@ def estimate_first_pulse(t, epochs_b, event_idx, timepoints_twopulse):
     return onepulse_mean
 
 def recovery_perISI(t, epochs_b, event_idx, num, time_window, dir):
-    """ Returns values of second pulse as a proportion of the first pulse.
+    """ Returns Area Under the Curve (AUC) of the second pulse as a proportion of the first pulse.
 
     params
     -----------------------
@@ -577,21 +555,15 @@ def recovery_perISI(t, epochs_b, event_idx, num, time_window, dir):
         indicates trial type
     time_window : float
         time range over which to measure the AUC
-    subject : string
-        indicates subject
     dir : string
         root directory
-    electrode : string (optional)
-        indicates name of electrode for which index should be determined.
-    return_data : Boolean (optional)
-        whether to return estimation of first pulse
 
     returns
     -----------------------
-    data_onepulse_mean : float (optional)
-        array with the estmiated broadband of the first pulse
     AUC2_prop : array dim(1, n)
         AUC of second pulse proportional to the first pulse for all the ISIs (n)
+        data_onepulse_mean : float (optional)
+        array with the estmiated broadband of the first pulse
 
     """
 
@@ -640,8 +612,6 @@ def d_prime(data_cat, data_other):
         data of the category of which the selectivity is being determined
     data_other : array dim(T, events)
         data of the other categories
-    axis : int (0 or 1)
-        measure variance over trials (axis=0) or over time (axis=1)
 
     returns
     -----------------------
@@ -782,22 +752,4 @@ def r_squared(data, fit):
         r_squared = np.nan
 
     return r_squared
-
-def summary_metrics_recovery(data_first_pulse, data_second_pulse, metric, ISI, dir):
-
-    # import timepoints of on- and offset of stimulus for one and twopulse trials
-    timepoints_onepulse = np.loadtxt(dir+'predefined_variables/timepoints_onepulse.txt', dtype=int)
-    timepoints_twopulse = np.loadtxt(dir+'predefined_variables/timepoints_twopulse.txt', dtype=int)
-    time_window = np.loadtxt(dir+'predefined_variables/ISI_recovery_time_window.txt', dtype=int)
-
-    # start first and second pulse:
-    start = timepoints_onepulse[0, 0]
-    start_second_pulse = timepoints_twopulse[ISI, 2]
-
-    if metric == 'AUC':
-
-        value_first = np.trapz(data_first_pulse[start: start+time_window])
-        value_second = np.trapz(data_second_pulse[start_second_pulse:start_second_pulse+time_window])
-
-        return value_first, value_second
 
