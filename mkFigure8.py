@@ -27,8 +27,8 @@ Author: A. Brands
 ##############################################################################################################
 
 # define root directory
-# dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
-dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
+dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
+# dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
 
 # import info responsive electrodes showing category-selectivity
 threshold_d_prime = 0.5
@@ -80,7 +80,7 @@ sample_rate = 512
 stim_onepulse = generate_stimulus_timecourse('onepulse', 4, dir)
 stim_twopulse = np.zeros((len(tempCond), len(t))) 
 for i in range(len(tempCond)):
-    stim_twopulse[i, :] = generate_stimulus_timecourse('twopulse_repeat', i+1, dir)
+    stim_twopulse[i, :] = generate_stimulus_timecourse('twopulse_repeat', i, dir)
 
 # fit curve for recovery of adaptation initial parameter values
 p0 = [1, 0]
@@ -499,20 +499,25 @@ for i in range(len(subtrials)):
 
     # NEURAL DATA
     max_data[i] = max(data_mean[start_1 - start: start_1 - start + time_window])
-    data_temp = gaussian_filter1d(data_mean[start_1 - start: start_1 - start + time_window]/max_data[i], sigma=10)
+    data_temp = gaussian_filter1d(data_mean[start_1 - start: start_1 - start + time_window]/max(data_mean[start_1 - start: start_1 - start + time_window]), sigma=10)
     ax_broadband_isolation[i].plot(np.arange(time_window), data_temp, color='black')
 
     # MODEL
     max_model[i] = max(model_mean[start_1 - start: start_1 - start + time_window])
-    model_temp = gaussian_filter1d(model_mean[start_1 - start: start_1 - start + time_window]/max_data[i], sigma=10)
+    model_temp = gaussian_filter1d(model_mean[start_1 - start: start_1 - start + time_window]/max(model_mean[start_1 - start: start_1 - start + time_window]), sigma=10)
     ax_broadband_isolation_pred[i].plot(np.arange(time_window), model_temp, color='black')
 
 # plot rest of figure
+t_zero          = np.argwhere(t > 0)[0][0]
+t_twohundred    = np.argwhere(t > 0.5)[0][0]
+
+x_label_single = ['0', '500']
+
 xtick_idx = []
 for i in range(len(tempCond)):
 
     # append x-tick
-    xtick_idx.append(i*(end+sep))
+    xtick_idx = xtick_idx + ([i*(end+sep) + t_zero, i*(end+sep) + t_twohundred])
 
     # compute timepoint of the start of both first and second pulse
     start_2 = timepoints_twopulse[i, 2]
@@ -624,9 +629,9 @@ ax['ISI_recovery_pred'].legend([(vertical_line1_pred, marker_pred[0], line[0]), 
 ax['broadband'].legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left", borderaxespad=0, ncol=4, frameon=False, fontsize=fontsize_legend)
 
 ax['broadband'].set_xticks(xtick_idx)
-ax['broadband'].set_xticklabels([' ', ' ', ' ', ' ', ' ', ' '])
+ax['broadband'].set_xticklabels([])
 ax['broadband_pred'].set_xticks(xtick_idx)
-ax['broadband_pred'].set_xticklabels(label_tempCond, rotation=45)
+ax['broadband_pred'].set_xticklabels(np.tile(x_label_single, 6))
 
 # save figure
 fig.align_ylabels()

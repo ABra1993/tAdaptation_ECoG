@@ -10,8 +10,8 @@ import seaborn as sns
 # import functions and scripts
 from utils import generate_stimulus_timecourse, import_info, import_epochs, select_events, select_events_durationTrials, d_prime_perImgCat
 from modelling_utils_paramInit import paramInit
-from models.Models_csDN import Models_csDN
-from models.Models_DN import Models_DN
+# from models.Models_csDN import Models_csDN
+# from models.Models_DN import Models_DN
 from modelling_utils_fitObjective import model_csDN, model_DN
 
 """
@@ -26,8 +26,8 @@ Author: A. Brands
 ##############################################################################################################
 
 # define root directory
-# dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
-dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
+dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
+# dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
 
 # specifiy the trial types
 # img_type = 'all'
@@ -60,7 +60,7 @@ stim_cat                  = np.loadtxt(dir+'variables/cond_stim.txt', dtype=str)
 # create stimulus timecourse
 stim_onepulse = np.zeros((len(tempCond), len(t))) 
 for i in range(len(tempCond)):
-    stim_onepulse[i, :] = generate_stimulus_timecourse('onepulse', i+1, dir)
+    stim_onepulse[i, :] = generate_stimulus_timecourse('onepulse', i, dir)
 
 # define model
 # model = 'DN'
@@ -398,11 +398,16 @@ ax['fwhm_pred'] = fig.add_subplot(gs[16:19, 9:22])
 ax_metrics = [ax['ttp'], ax['fwhm'], ax['fwhm_pred']]
 
 # plot stimulus timecourse and time courses of neural data & model
+t_zero          = np.argwhere(t > 0)[0][0]
+t_twohundred    = np.argwhere(t > 0.5)[0][0]
+
+x_label_single = ['0', '500']
+
 xtick_idx = []
 for i in range(len(tempCond)):
 
     # append x-tick
-    xtick_idx.append(i*(end+sep))
+    xtick_idx = xtick_idx + ([i*(end+sep) + t_zero, i*(end+sep) + t_twohundred])
 
     # plot stimulus timecourse
     end_stim = timepoints_onepulse[i, 1]
@@ -420,7 +425,7 @@ for i in range(len(tempCond)):
 
         # plot mean values (panel A)
         data_temp = gaussian_filter1d(np.mean(broadband_bootstrap[j][:, i, :], axis=0), 10)
-        model_temp = np.mean(broadband_pred_bootstrap[j][:, i, :], axis=0)
+        model_temp = gaussian_filter1d(np.mean(broadband_pred_bootstrap[j][:, i, :], axis=0), 10)
 
         if i == 0:
             ax['broadband'].plot(np.arange(end - start)+i*(end+sep), data_temp[start:end], color=np.array(colors_VA[j])/255, label=VA[j])
@@ -466,18 +471,18 @@ ax['broadband'].tick_params(axis='both', which='major',          labelsize=fonts
 ax['broadband'].set_yticks([0, 0.5, 1])
 ax['broadband'].axhline(0, color='grey', lw=0.5, alpha=0.5)
 ax['broadband'].set_xticks(xtick_idx)
-ax['broadband'].set_xticklabels([' ', ' ', ' ', ' ', ' ', ' '])
+ax['broadband'].set_xticklabels([])
 # ax['broadband'].set_ylabel('Neural data', fontsize=fontsize_label)
 
 ax['broadband_model'].spines['top'].set_visible(False)
 ax['broadband_model'].spines['right'].set_visible(False)
 ax['broadband_model'].tick_params(axis='both', which='major', labelsize=fontsize_tick)
-ax['broadband_model'].tick_params(axis='x', labelsize=fontsize_label, labelrotation=45)
-ax['broadband_model'].set_xlabel('Duration (ms)', fontsize=fontsize_label)
+# ax['broadband_model'].tick_params(axis='x', labelsize=fontsize_label, labelrotation=45)
+ax['broadband_model'].set_xlabel('Time (ms)', fontsize=fontsize_label)
 ax['broadband_model'].set_yticks([0, 0.5, 1])
 ax['broadband_model'].axhline(0, color='grey', lw=0.5, alpha=0.5)
 ax['broadband_model'].set_xticks(xtick_idx)
-ax['broadband_model'].set_xticklabels(label_tempCond, rotation=45)
+ax['broadband_model'].set_xticklabels(np.tile(x_label_single, 6))
 # ax['broadband_model'].set_ylabel('DN model', fontsize=fontsize_label)
 
 for i in range(len(ax_metrics)):
@@ -488,6 +493,7 @@ for i in range(len(ax_metrics)):
 
     if i == 0:
         ax_metrics[i].set_xticks(np.arange(len(VA))+0.1)
+        ax_metrics[i].set_xlim(-0.5, 2.5)
         ax_metrics[i].set_xticklabels([' ', ' ', ' '], fontsize=fontsize_label)
         if preference == 0:
             ax_metrics[i].set_ylim(0.05, 0.25)
@@ -501,7 +507,7 @@ for i in range(len(ax_metrics)):
         ax_metrics[i].set_xticks([1, 6, 11, 16, 21, 26])
         ax_metrics[i].set_xticklabels([' ', ' ', ' ', ' ', ' ', ' '])
         if preference == 0:
-            ax_metrics[i].set_ylim(0.0, 0.6)
+            ax_metrics[i].set_ylim(-0.05, 0.6)
         elif preference == 1:
             ax_metrics[i].set_ylim(-0.05, 0.7)
         elif preference == 2:
@@ -513,7 +519,7 @@ for i in range(len(ax_metrics)):
         ax_metrics[i].set_xticks([1, 6, 11, 16, 21, 26])
         ax_metrics[i].set_xticklabels(label_tempCond, fontsize=fontsize_label, rotation=45)
         if preference == 0:
-            ax_metrics[i].set_ylim(0.0, 0.6)
+            ax_metrics[i].set_ylim(-0.05, 0.6)
         elif preference == 1:
             ax_metrics[i].set_ylim(0.0, 0.8)
         elif preference == 2:
@@ -533,6 +539,9 @@ plt.savefig(dir+'mkFigure/Fig4_' + img_type, dpi=300)
 ############################################################################
 ######################################################## STATISTICAL TESTING
 
+alpha = 0.05
+Bonferroni = 6
+
 metrics = ['Time-to-peak', 'Full-width half max']
 for i in range(2):
 
@@ -550,7 +559,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('V1-3 vs. ventral: ', p)
+        if p < alpha:
+            print('V1-3 vs. VOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('V1-3 vs. VOTC: ', p)
 
         # early vs. LO
         sample1 = ttp_medians[0, :]
@@ -558,7 +570,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('V1-3 vs. LO: ', p)
+        if p < alpha:
+            print('V1-3 vs. LOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('V1-3 vs. LOTC: ', p)
 
         # ventral vs. LO
         sample1 = ttp_medians[1, :]
@@ -566,7 +581,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('ventral vs. LO: ', p)
+        if p < alpha:
+            print('VOTC vs. LOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('VOTC vs. LOTC: ', p)
 
         print('#'*30)
         print('MODEL')
@@ -577,7 +595,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('V1-3 vs. ventral: ', p)
+        if p < alpha:
+            print('V1-3 vs. VOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('V1-3 vs. VOTC: ', p)
 
         # early vs. LO
         sample1 = ttp_pred_medians[0, :]
@@ -585,7 +606,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('V1-3 vs. LO: ', p)
+        if p < alpha:
+            print('V1-3 vs. LOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('V1-3 vs. LOTC: ', p)
 
         # ventral vs. LO
         sample1 = ttp_pred_medians[1, :]
@@ -593,7 +617,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('ventral vs. LO: ', p)
+        if p < alpha:
+            print('VOTC vs. LOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('VOTC vs. LOTC: ', p)
 
     elif i == 1: # full-width at half-maximum
 
@@ -610,7 +637,10 @@ for i in range(2):
             param_diffs = sample1 - sample2
 
             p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-            print('V1-3 vs. ventral: ', p)
+            if p < alpha/Bonferroni:
+                print('V1-3 vs. VOTC: ', p, ' SIGNIFICANT')
+            else:
+                print('V1-3 vs. VOTC: ', p)
 
             # early vs. LO
             sample1 = fwhm_medians[0, j, :]
@@ -618,7 +648,10 @@ for i in range(2):
             param_diffs = sample1 - sample2
 
             p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-            print('V1-3 vs. LO: ', p)
+            if p < alpha/Bonferroni:
+                print('V1-3 vs. LOTC: ', p, ' SIGNIFICANT')
+            else:
+                print('V1-3 vs. LOTC: ', p)
 
             # ventral vs. LO
             sample1 = fwhm_medians[1, j, :]
@@ -626,7 +659,10 @@ for i in range(2):
             param_diffs = sample1 - sample2
 
             p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-            print('ventral vs. LO: ', p)
+            if p < alpha/Bonferroni:
+                print('VOTC vs. LOTC: ', p, ' SIGNIFICANT')
+            else:
+                print('VOTC vs. LOTC: ', p)
 
         print('#'*30)
         print('MODEL')
@@ -641,7 +677,10 @@ for i in range(2):
             param_diffs = sample1 - sample2
 
             p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-            print('V1-3 vs. ventral: ', p)
+            if p < alpha/Bonferroni:
+                print('V1-3 vs. VOTC: ', p, ' SIGNIFICANT')
+            else:
+                print('V1-3 vs. VOTC: ', p)
 
             # early vs. LO
             sample1 = fwhm_pred_medians[0, j, :]
@@ -649,7 +688,10 @@ for i in range(2):
             param_diffs = sample1 - sample2
 
             p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-            print('V1-3 vs. LO: ', p)
+            if p < alpha/Bonferroni:
+                print('V1-3 vs. LOTC: ', p, ' SIGNIFICANT')
+            else:
+                print('V1-3 vs. LOTC: ', p)
 
             # ventral vs. LO
             sample1 = fwhm_pred_medians[1, j, :]
@@ -657,7 +699,10 @@ for i in range(2):
             param_diffs = sample1 - sample2
 
             p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-            print('ventral vs. LO: ', p)
+            if p < alpha/Bonferroni:
+                print('VOTC vs. LOTC: ', p, ' SIGNIFICANT')
+            else:
+                print('VOTC vs. LOTC: ', p)
 
 # save figure
 plt.tight_layout()

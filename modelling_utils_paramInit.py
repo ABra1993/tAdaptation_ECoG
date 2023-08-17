@@ -19,7 +19,7 @@ def paramInit(model):
 
     """
 
-    if model == 'csDN':
+    if (model == 'csDN') | (model == 'csDN_withoutGeneralScaling'):
 
         sf_bodies = 2
         sf_bodies_lb = 0.01
@@ -45,6 +45,12 @@ def paramInit(model):
         sf_scrambled_lb = 0.01
         sf_scrambled_ub = 200
 
+    if (model == 'csDN') | (model == 'DN'):
+
+        sf = 1
+        sf_lb = 0.01
+        sf_ub = 200
+
     tau = 0.01
     tau_lb = 0.001
     tau_ub = 1
@@ -65,26 +71,29 @@ def paramInit(model):
     sigma_lb = 0
     sigma_ub = 1
 
-    scale = 2
-    scale_lb = 0.01
-    scale_ub = 200
-
     # initiate params
     if (model == 'DN'):
 
         # initiate param for model fit
         params_names = ['tau', 'shift', 'scale', 'n', 'sigma', 'tau_a']
-        x0 = [tau, shift, scale, n, sigma, tau_a]
-        lb = [tau_lb, shift_lb, scale_lb, n_lb, sigma_lb, tau_a_lb]
-        ub = [tau_ub, shift_ub, scale_ub, n_ub, sigma_ub, tau_a_ub]
+        x0 = [tau, shift, sf, n, sigma, tau_a]
+        lb = [tau_lb, shift_lb, sf_lb, n_lb, sigma_lb, tau_a_lb]
+        ub = [tau_ub, shift_ub, sf_ub, n_ub, sigma_ub, tau_a_ub]
 
     elif model == 'csDN':
 
         # initiate param for model fit
         params_names = ['tau', 'shift', 'scale', 'n', 'sigma', 'tau_a', 'sf_bodies', 'sf_buildings', 'sf_faces', 'sf_objects', 'sf_scenes', 'sf_scrambled']
-        x0 = [tau, shift, scale, n, sigma, tau_a, sf_bodies, sf_buildings, sf_faces, sf_objects, sf_scenes, sf_scrambled]
-        lb = [tau_lb, shift_lb, scale_lb, n_lb, sigma_lb, tau_a_lb, sf_bodies_lb, sf_buildings_lb, sf_faces_lb, sf_objects_lb, sf_scenes_lb, sf_scrambled_lb]
-        ub = [tau_ub, shift_ub, scale_ub, n_ub, sigma_ub, tau_a_ub, sf_bodies_ub, sf_buildings_ub, sf_faces_ub, sf_objects_ub, sf_scenes_ub, sf_scrambled_ub]
+        x0 = [tau, shift, sf, n, sigma, tau_a, sf_bodies, sf_buildings, sf_faces, sf_objects, sf_scenes, sf_scrambled]
+        lb = [tau_lb, shift_lb, sf_lb, n_lb, sigma_lb, tau_a_lb, sf_bodies_lb, sf_buildings_lb, sf_faces_lb, sf_objects_lb, sf_scenes_lb, sf_scrambled_lb]
+        ub = [tau_ub, shift_ub, sf_ub, n_ub, sigma_ub, tau_a_ub, sf_bodies_ub, sf_buildings_ub, sf_faces_ub, sf_objects_ub, sf_scenes_ub, sf_scrambled_ub]
 
+    elif model == 'csDN_withoutGeneralScaling':
+
+        # initiate param for model fit
+        params_names = ['tau', 'shift', 'n', 'sigma', 'tau_a', 'sf_bodies', 'sf_buildings', 'sf_faces', 'sf_objects', 'sf_scenes', 'sf_scrambled']
+        x0 = [tau, shift, n, sigma, tau_a, sf_bodies, sf_buildings, sf_faces, sf_objects, sf_scenes, sf_scrambled]
+        lb = [tau_lb, shift_lb, n_lb, sigma_lb, tau_a_lb, sf_bodies_lb, sf_buildings_lb, sf_faces_lb, sf_objects_lb, sf_scenes_lb, sf_scrambled_lb]
+        ub = [tau_ub, shift_ub, n_ub, sigma_ub, tau_a_ub, sf_bodies_ub, sf_buildings_ub, sf_faces_ub, sf_objects_ub, sf_scenes_ub, sf_scrambled_ub]
 
     return params_names, x0, lb, ub

@@ -1,7 +1,7 @@
 import numpy as np
 import math
 
-class Models_csDN:
+class Models_csDN_withoutGeneralScaling:
     """ Simulation of several temporal models to predict a neuronal response given a stimulus
     time series as input.
 
@@ -28,8 +28,6 @@ class Models_csDN:
         ratio of negative to positive IRFs
     shift : float
         time between stimulus onset and when the signal reaches the cortex (seconds)
-    scale : float
-        response gain
     n : float
         exponent
     sigma : float
@@ -38,12 +36,11 @@ class Models_csDN:
 
     """
 
-    def __init__(self, stim, sample_rate, tau, shift, scale, n, sigma, tau_a, sf_bodies, sf_buildings, sf_faces, sf_objects, sf_scenes, sf_scrambled):
+    def __init__(self, stim, sample_rate, tau, shift, n, sigma, tau_a, sf_bodies, sf_buildings, sf_faces, sf_objects, sf_scenes, sf_scrambled):
 
         # assign class variables
         self.tau = tau
         self.shift = shift
-        self.scale = scale
         self.n = n
         self.sigma = sigma
         self.tau_a = tau_a
@@ -228,10 +225,7 @@ class Models_csDN:
         demrsp = self.sigma**self.n + abs(linrsp)**self.n                       # semi-saturate + exponentiate
         normrsp = input/demrsp                                                  # divide
 
-        # scale with gain
-        rsp = self.scale * normrsp
-
-        return rsp
+        return normrsp
 
     def norm_delay(self, input, linrsp, denom=False):
         """ Introduces delay in input
@@ -256,13 +250,10 @@ class Models_csDN:
         demrsp = self.sigma**self.n + abs(poolrsp)**self.n                      # semi-saturate + exponentiate
         normrsp = input/demrsp                                                  # divide
 
-        # scale with gain
-        rsp = self.scale * normrsp
-
         if denom:
-            return rsp, demrsp
+            return normrsp, demrsp
         else:
-            return rsp
+            return normrsp
         
     def gammaPDF(self, t, tau, n):
         """ Returns values of a gamma function for a given timeseries.

@@ -710,11 +710,11 @@ def generate_stimulus_timecourse(trial, cond, dir):
     # extract timepoints on- and offset stimulus
     if 'onepulse' in trial:
         timepoints_onepulse = np.loadtxt(dir+'variables/timepoints_onepulse.txt')
-        T_input[int(timepoints_onepulse[cond-1, 0]):int(timepoints_onepulse[cond-1, 1])] = 1
+        T_input[int(timepoints_onepulse[cond, 0]):int(timepoints_onepulse[cond, 1])] = 1
     elif 'twopulse' in trial:
         timepoints_twopulse = np.loadtxt(dir+'variables/timepoints_twopulse.txt')
-        T_input[int(timepoints_twopulse[cond-1, 0]):int(timepoints_twopulse[cond-1, 1])] = 1
-        T_input[int(timepoints_twopulse[cond-1, 2]):int(timepoints_twopulse[cond-1, 3])] = 1
+        T_input[int(timepoints_twopulse[cond, 0]):int(timepoints_twopulse[cond, 1])] = 1
+        T_input[int(timepoints_twopulse[cond, 2]):int(timepoints_twopulse[cond, 3])] = 1
 
     return T_input
 

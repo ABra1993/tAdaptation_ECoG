@@ -10,7 +10,7 @@ import scipy.optimize as optimize
 
 from modelling_utils_paramInit import paramInit
 from utils import generate_stimulus_timecourse, r_squared
-from modelling_utils_fitObjective import objective_DN, objective_csDN, model_DN, model_csDN
+from modelling_utils_fitObjective import objective_DN, objective_csDN, objective_csDN_withoutGenerelScaling, model_DN, model_csDN, model_csDN_withoutGeneralScaling
 
 """
 Author: A. Brands
@@ -20,11 +20,11 @@ Description: Cross-validation of the model (Fit-then-average procedure, where pa
 """
 
 # define root directory
-dir = '/home/amber/OneDrive/code/git_nAdaptation_ECoG/'
+dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
 
 ##### SPECIFY ELECTRODE TYPE
-electrode_type = 'visuallyResponsive'
-#electrode_type = 'categorySelective'
+# electrode_type = 'visuallyResponsive'
+electrode_type = 'categorySelective'
 
 # import variables
 img_cat     = np.loadtxt(dir+'variables/cond_stim.txt', dtype=str)
@@ -37,6 +37,12 @@ if electrode_type == 'visuallyResponsive':
     electrodes = pd.read_csv(dir+'subject_data/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
 elif electrode_type == 'categorySelective':
      electrodes = pd.read_csv(dir+'subject_data/electrodes_categorySelective_0-5.txt', header=0, index_col=0, delimiter=' ')
+
+# # model fit for a single electrode
+# electrodes = electrodes[(electrodes.subject == 'sub-p14') & (electrodes.electrode == 'LO01')]
+# electrodes.reset_index(drop=True, inplace=True)
+
+# count electrodes
 n_electrodes = len(electrodes)
 # n_electrodes = 1
 
@@ -49,13 +55,15 @@ r2_per_test = ['r2_1', 'r2_2', 'r2_3', 'r2_4', 'r2_5', 'r2_6']
 
 # model hyperparameters
 max_nfev        = 1000
+# max_nfev        = 1
 sample_rate     = 512
 nFolds          = 12
 
 # set model parameters
-model = 'DN'
+# model = 'DN'
 # model = 'csDN'
-if model not in ['DN', 'csDN']:
+model = 'csDN_withoutGeneralScaling'
+if model not in ['DN', 'csDN', 'csDN_withoutGeneralScaling']:
     sys.exit('\n Model does not exist, choose one of the following ["DN", "DN_cs"] \n')
 
 # retrieve initial values of parameters
@@ -121,9 +129,12 @@ def model_fit(i):
     elif model == 'csDN':
         info = y.loc[:, ['trial_type', 'temp_cond', 'img_cat']]
         res = optimize.least_squares(objective_csDN, x0, args=(X_full, y_full, info, sample_rate, dir), max_nfev=max_nfev, bounds=(lb, ub))
+    elif model == 'csDN_withoutGeneralScaling':
+        info = y.loc[:, ['trial_type', 'temp_cond', 'img_cat']]
+        res = optimize.least_squares(objective_csDN_withoutGenerelScaling, x0, args=(X_full, y_full, info, sample_rate, dir), max_nfev=max_nfev, bounds=(lb, ub))
 
     # plot model fit for first six image categories
-    fig, axs = plt.subplots(1, 6, figsize=(15,2))
+    _, axs = plt.subplots(1, 6, figsize=(15,2))
     min_value = np.amin(np.array(y.loc[:, t_index]))
     max_value = np.amax(np.array(y.loc[:, t_index]))
     for j in range(6): # plots one fitted sample per image category (onepulse, ISI of 533 ms)
@@ -133,20 +144,34 @@ def model_fit(i):
 
         # stimulus timecourse
         stim_plot = X_full[idx_plot, :]
-        axs[j].plot(stim_plot, color='blue', alpha=0.2)
-
-        # data
-        axs[j].set_ylim(min_value, max_value+0.10*max_value)
-        axs[j].plot(y_full[idx_plot, :], 'k')
-        axs[j].set_title(y.loc[idx_plot, 'trial_type'] + ', ' + str(temp_cond[int(y.loc[idx_plot, 'temp_cond'])]) + 'ms ,\n' + y.loc[idx_plot, 'img_cat'], fontsize=8)
+        axs[j].plot(stim_plot, color='blue', alpha=0.2, label='Stimulus')
 
         # model prediction
         if model == 'DN':
             prediction = model_DN(stim_plot, sample_rate, res.x)
         elif model == 'csDN':
             stim_plot, prediction = model_csDN(stim_plot, y.loc[idx_plot, 'trial_type'], y.loc[idx_plot, 'temp_cond'], y.loc[idx_plot, 'img_cat'], sample_rate, res.x, dir)
-        axs[j].plot(prediction, 'r')
+        elif model == 'csDN_withoutGeneralScaling':
+            stim_plot, prediction = model_csDN_withoutGeneralScaling(stim_plot, y.loc[idx_plot, 'trial_type'], y.loc[idx_plot, 'temp_cond'], y.loc[idx_plot, 'img_cat'], sample_rate, res.x, dir)
+        axs[j].plot(prediction, 'r', label='DN model')
 
+        # compute coefficient of variation
+        r_2 = r_squared(y_full[idx_plot, :], prediction)
+
+        # adjust axes
+        if j != 0:
+            axs[j].set_yticks([])
+        else:
+            axs[j].set_ylabel('Broadband power', fontsize=8)
+        axs[j].set_xlabel('Model timesteps', fontsize=8)
+        axs[j].plot(y_full[idx_plot, :], 'k', label='Neural data')
+        axs[j].set_title(y.loc[idx_plot, 'trial_type'] + ', ' + str(temp_cond[int(y.loc[idx_plot, 'temp_cond'])]) + 'ms ,\n' + y.loc[idx_plot, 'img_cat'] + r' ($R^{2}$: ' + str(np.round(r_2, 2)) + ')', fontsize=8)
+
+        # data
+        axs[j].set_ylim(min_value, max_value+0.10*max_value)
+
+    axs[0].legend(fontsize=6)
+    plt.tight_layout()
     plt.savefig(dir+'modelFit/' + electrode_type + '/figures/' + subject + '_' + electrode_name + '_modelFit_' + model)
     plt.close()
 
@@ -184,7 +209,7 @@ def model_fit(i):
         y_test = np.array(y.iloc[test_idx, 2:2+len(t_index)])
 
         # determine conditions
-        if model == 'csDN':
+        if (model == 'csDN') | (model == 'csDN_withoutGeneralScaling'):
             info = y.loc[train_idx, ['trial_type', 'temp_cond', 'img_cat']]
             info.reset_index(inplace=True, drop=True)
 
@@ -194,6 +219,8 @@ def model_fit(i):
             res = optimize.least_squares(objective_DN, x0, args=(X_train, y_train, sample_rate), max_nfev=max_nfev, bounds=(lb, ub))
         elif model == 'csDN':
             res = optimize.least_squares(objective_csDN, x0, args=(X_train, y_train, info, sample_rate, dir), max_nfev=max_nfev, bounds=(lb, ub))
+        elif model == 'csDN_withoutGeneralScaling':
+            res = optimize.least_squares(objective_csDN_withoutGenerelScaling, x0, args=(X_train, y_train, info, sample_rate, dir), max_nfev=max_nfev, bounds=(lb, ub))
 
         # retrieve parameters
         popt = res.x
@@ -216,10 +243,12 @@ def model_fit(i):
                 pred_temp = model_DN(X_test[k], sample_rate, popt)
             elif model == 'csDN':
                 _, pred_temp = model_csDN(X_test[k], stim.loc[test_idx[k], 'trial_type'], int(stim.loc[test_idx[k], 'temp_cond']), stim.loc[test_idx[k], 'img_cat'], sample_rate, popt, dir)
+            elif model == 'csDN_withoutGeneralScaling':
+                _, pred_temp = model_csDN_withoutGeneralScaling(X_test[k], stim.loc[test_idx[k], 'trial_type'], int(stim.loc[test_idx[k], 'temp_cond']), stim.loc[test_idx[k], 'img_cat'], sample_rate, popt, dir)
                 
-            temp = np.round(r_squared(y_test[k], pred_temp), 3)
-            r_sq_per_test[k] = temp
-            r_sq_fold_pd.loc[fold_idx, r2_per_fold[k]] = np.round(temp, 3)
+            temp = r_squared(y_test[k], pred_temp)
+            r_sq_per_test[k] = np.round(temp, 3)
+            r_sq_fold_pd.loc[fold_idx, r2_per_fold[k]] = np.round(temp, 3)            
 
         # save cv r2
         r_sq_temp[fold_idx] = np.round(np.mean(r_sq_per_test), 4)

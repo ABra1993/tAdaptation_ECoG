@@ -19,8 +19,8 @@ Author: A. Brands
 ##############################################################################################################
 
 # define root directory
-# dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
-dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
+dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
+# dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
 
 ##############################################################################################################
 ##############################################################################################################
@@ -115,7 +115,7 @@ br = [br1, br2]
 ax.bar(br1, model1, color='white', width = barWidth,
         edgecolor = 'black', label = models[0], yerr=r2_values_variance[:, 0])
 ax.bar(br2, model2, color = np.array([212, 0, 0])/255 , width = barWidth,
-        edgecolor = 'white', label = models[1], yerr=r2_values_variance[:, 0])
+        edgecolor = np.array([212, 0, 0])/255, label = models[1], yerr=r2_values_variance[:, 0])
 
 # axes
 ax.set_ylabel(r'Cross-validated $R^{2}$', fontsize=fontsize_label)

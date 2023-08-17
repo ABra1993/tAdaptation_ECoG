@@ -27,8 +27,8 @@ Author: A. Brands
 ##############################################################################################################
 
 # define root directory
-# dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
-dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
+dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
+# dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
 
 # import info responsive electrodes showing category-selectivity
 threshold_d_prime = 0.5
@@ -71,7 +71,7 @@ cond = [6]
 trials = ['onepulse', 'twopulse_repeat']
 stim_twopulse = np.zeros((len(tempCond), len(t))) 
 for i in range(len(tempCond)):
-    stim_twopulse[i, :] = generate_stimulus_timecourse(trials[1], i+1, dir)
+    stim_twopulse[i, :] = generate_stimulus_timecourse(trials[1], i, dir)
 
 # initiate figure
 fig = plt.figure(figsize=(16, 3))

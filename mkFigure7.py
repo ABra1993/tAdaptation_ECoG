@@ -27,8 +27,8 @@ Author: A. Brands
 ##############################################################################################################
 
 # define root directory
-# dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
-dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
+dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
+# dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
 
 ##############################################################################################################
 ##############################################################################################################
@@ -90,8 +90,8 @@ trials = ['onepulse', 'twopulse_repeat']
 stim_onepulse = np.zeros((len(tempCond), len(t))) 
 stim_twopulse = np.zeros((len(tempCond), len(t))) 
 for i in range(len(tempCond)):
-    stim_onepulse[i, :] = generate_stimulus_timecourse(trials[0], i+1, dir)
-    stim_twopulse[i, :] = generate_stimulus_timecourse(trials[1], i+1, dir)
+    stim_onepulse[i, :] = generate_stimulus_timecourse(trials[0], i, dir)
+    stim_twopulse[i, :] = generate_stimulus_timecourse(trials[1], i, dir)
 
     # initiate figure
 fig = plt.figure(figsize=(18, 10))
@@ -315,7 +315,7 @@ for i in range(len(VA)):
     # ax_broadband[0].plot(t, data_temp/max(data_temp), color=np.array(colors_VA[i])/255, alpha=0.2)
 
     # MODEL - ALL
-    model_temp = np.mean(broadband_area_pred_bootstrap[i], axis=0)
+    model_temp = gaussian_filter1d(np.mean(broadband_area_pred_bootstrap[i], axis=0), 10)
     ax_broadband[0].plot(t, model_temp/max(model_temp), color=np.array(colors_VA[i])/255)
 
     # MODEL - NOM
@@ -481,7 +481,7 @@ for i in range(len(VA)):
     # ax_broadband[0].plot(t, data_temp/max(data_temp), color=np.array(colors_VA[i])/255, alpha=0.2)
 
     # MODEL - ALL
-    model_temp = np.mean(broadband_area_pred_bootstrap[i], axis=0)
+    model_temp = gaussian_filter1d(np.mean(broadband_area_pred_bootstrap[i], axis=0), 10)
     ax_broadband[1].plot(t, model_temp/max(model_temp), color=np.array(colors_VA[i])/255)
 
     # MODEL - NOM
@@ -506,6 +506,7 @@ for i in range(len(ax_broadband_single)):
     ax_broadband_single[i].spines['right'].set_visible(False)
     ax_broadband_single[i].axhline(0, color='grey', lw=0.5, alpha=0.5)
     ax_broadband_single[i].tick_params(axis='both', which='major', labelsize=fontsize_tick)
+    ax_broadband_single[i].set_xticks([0, 0.5, 1])
     # ax_broadband_single[i].set_xlabel('Time (ms)')
     # if i == 0:
     #     ax_broadband_single[i].set_ylabel('Model prediction', fontsize=fontsize_label)
@@ -517,6 +518,7 @@ for i in range(len(ax_broadband_repeat)):
     ax_broadband_repeat[i].spines['right'].set_visible(False)
     ax_broadband_repeat[i].axhline(0, color='grey', lw=0.5, alpha=0.5)
     ax_broadband_repeat[i].tick_params(axis='both', which='major', labelsize=fontsize_tick)
+    ax_broadband_repeat[i].set_xticks([0, 0.5, 1])
     # ax_broadband_repeat[i].set_xlabel('Time (ms)', fontsize=fontsize_label)
     # if i == 0:
     #     ax_broadband_repeat[i].set_ylabel('Model prediction', fontsize=fontsize_label)

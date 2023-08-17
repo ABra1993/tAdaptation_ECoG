@@ -12,7 +12,7 @@ import seaborn as sns
 # import functions and scripts
 from utils import generate_stimulus_timecourse, import_info, import_epochs, select_events, select_events_repetitionTrials, d_prime_perImgCat, estimate_first_pulse
 from modelling_utils_paramInit import paramInit
-from modelling_utils_fitObjective import model_csDN, model_DN, OF_ISI_recovery_log
+from modelling_utils_fitObjective import model_csDN, model_DN, model_csDN_withoutGeneralScaling, OF_ISI_recovery_log
 
 
 """
@@ -21,19 +21,19 @@ Author: A. Brands
 
 """
 
-############################################################################################## ADAPT CODE HERE
+############################################################################################## ADAPT CODE HERES
 ##############################################################################################################
 ##############################################################################################################
 ##############################################################################################################
 
 # define root directory
-# dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
-dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
+dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
+# dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
 
 # specifiy the trial types
 # img_type = 'all'
-img_type = 'preferred'
-# img_type = 'nonpreferred'
+# img_type = 'preferred'
+img_type = 'nonpreferred'
 
 ##############################################################################################################
 ##############################################################################################################
@@ -72,6 +72,7 @@ axis = [None, 'TEMP', 'TEMP']
 # define model
 # model = 'DN'
 model = 'csDN'
+# model = 'csDN_withoutGeneralScaling'
 
 # retrieve parameters
 params_names, _, _, _ = paramInit(model)
@@ -80,8 +81,8 @@ sample_rate = 512
 # create stimulus timecourse
 stim_twopulse = np.zeros((len(tempCond), len(t))) 
 for i in range(len(tempCond)):
-    stim_twopulse[i, :] = generate_stimulus_timecourse(trials[2], i+1, dir)
-stim_onepulse = generate_stimulus_timecourse('onepulse', 4, dir)
+    stim_twopulse[i, :] = generate_stimulus_timecourse(trials[2], i, dir)
+stim_onepulse = generate_stimulus_timecourse('onepulse', 3, dir)
 
 # visual areas (labels)
 VA = ['V1-V3', 'VOTC', 'LOTC']
@@ -288,6 +289,22 @@ for key, value in VA_name_idx.items():
                         _, temp[num, :] = model_csDN(stim_onepulse, 'onepulse', 3, stim_cat[l], sample_rate, params_current, dir) 
                         num+=1
                 broadband_pulse1_pred_current[i, :] = np.mean(temp, 0)
+        elif model == 'csDN_withoutGeneralScaling':
+            if preference == 0:     # all  
+                temp = np.zeros((len(stim_cat), len(t))) # all image categories expect preferred
+                for l in range(len(stim_cat)):
+                    _, temp[l, :] = model_csDN_withoutGeneralScaling(stim_onepulse, 'onepulse', 3, stim_cat[l], sample_rate, params_current, dir) 
+                broadband_pulse1_pred_current[i, :] = np.mean(temp, 0)
+            elif preference == 1:   # preferred
+                _, broadband_pulse1_pred_current[i, :] = model_csDN_withoutGeneralScaling(stim_onepulse, 'onepulse', 3, cat[0], sample_rate, params_current, dir)  
+            elif preference == 2:   # nonpreferred
+                temp = np.zeros((len(stim_cat)-1, len(t))) # all image categories expect preferred
+                num = 0
+                for l in range(len(stim_cat)):
+                    if stim_cat[l] != cat[0]:
+                        _, temp[num, :] = model_csDN_withoutGeneralScaling(stim_onepulse, 'onepulse', 3, stim_cat[l], sample_rate, params_current, dir) 
+                        num+=1
+                broadband_pulse1_pred_current[i, :] = np.mean(temp, 0)
         elif model == 'DN':
             broadband_pulse1_pred_current[i, :] = model_DN(stim_onepulse[j, :], sample_rate, params_current)
 
@@ -313,6 +330,22 @@ for key, value in VA_name_idx.items():
                     for l in range(len(stim_cat)):
                         if stim_cat[l] != cat[0]:
                             _, temp[num, :] = model_csDN(stim_twopulse[j, :], 'twopulse_repeat', j, stim_cat[l], sample_rate, params_current, dir) 
+                            num+=1
+                    broadband_pred_current[i, j, :] = np.mean(temp, 0)
+            elif model == 'csDN_withoutGeneralScaling':
+                if preference == 0:     # all  
+                    temp = np.zeros((len(stim_cat), len(t))) # all image categories expect preferred
+                    for l in range(len(stim_cat)):
+                        _, temp[l, :] = model_csDN_withoutGeneralScaling(stim_twopulse[j, :], 'twopulse_repeat', j, stim_cat[l], sample_rate, params_current, dir) 
+                    broadband_pred_current[i, j, :] = np.mean(temp, 0)
+                elif preference == 1:
+                    _, broadband_pred_current[i, j, :] = model_csDN_withoutGeneralScaling(stim_twopulse[j, :], 'twopulse_repeat', j, cat[0], sample_rate, params_current, dir)  
+                elif preference == 2:
+                    temp = np.zeros((len(stim_cat)-1, len(t))) # all image categories expect preferred
+                    num = 0
+                    for l in range(len(stim_cat)):
+                        if stim_cat[l] != cat[0]:
+                            _, temp[num, :] = model_csDN_withoutGeneralScaling(stim_twopulse[j, :], 'twopulse_repeat', j, stim_cat[l], sample_rate, params_current, dir) 
                             num+=1
                     broadband_pred_current[i, j, :] = np.mean(temp, 0)
             elif model == 'DN':
@@ -557,6 +590,7 @@ for i in range(len(ax_broadband_isolation)):
     ax_broadband_isolation[i].axhline(0, color='grey', lw=0.5, alpha=0.5)
     ax_broadband_isolation[i].set_xlabel('Time (ms)', fontsize=fontsize_label)
     ax_broadband_isolation[i].set_ylim(y_lim_in_isolation[i])
+    ax_broadband_isolation[i].set_xticks([0, 200])
     # ax_broadband_isolation[i].set_title('Neural data', fontsize=fontsize_title)
     # if i == 0:
         # ax_broadband_isolation[i].set_ylabel('Change in power (x-fold)', fontsize=fontsize_label)
@@ -569,6 +603,7 @@ for i in range(len(ax_broadband_isolation_pred)):
     ax_broadband_isolation_pred[i].set_xlabel('Time (ms)', fontsize=fontsize_label)
     ax_broadband_isolation_pred[i].set_ylim(y_lim_in_isolation[i])
     ax_broadband_isolation_pred[i].set_yticklabels([])
+    ax_broadband_isolation_pred[i].set_xticks([0, 200])
     # ax_broadband_isolation_pred[i].set_title('DN model', fontsize=fontsize_title)
 
 # ax['ISI_recovery'].set_xlabel('ISI (ms)', fontsize=fontsize_label)
@@ -648,12 +683,17 @@ for i in range(len(VA)):
     model_temp = gaussian_filter1d(data_pulse1[start_1 - start: start_1 - start + time_window]/max_model[i], 10)
     ax_broadband_isolation_pred[i].plot(np.arange(time_window), model_temp, color='black', zorder=1)
 
-# plot rest of figure
+# plot stimulus timecourse and time courses of neural data & model
+t_zero          = np.argwhere(t > 0)[0][0]
+t_twohundred    = np.argwhere(t > 0.5)[0][0]
+
+x_label_single = ['0', '500']
+
 xtick_idx = []
 for i in range(len(tempCond)):
 
     # append x-tick
-    xtick_idx.append(i*(end+sep))
+    xtick_idx = xtick_idx + ([i*(end+sep) + t_zero, i*(end+sep) + t_twohundred])
 
     # compute timepoint of the start of both first and second pulse
     start_2 = timepoints_twopulse[i, 2]
@@ -746,8 +786,8 @@ for i in range(len(tempCond)):
 for i in range(len(VA)):
 # for i in range(1):
 
-    line_temp, = ax['ISI_recovery'].plot(t1_plot, ISI_recovery_log[i, :]*100, color=np.array(colors_VA[i])/255, zorder=-5, linestyle=linestyle[i])
-    ax['ISI_recovery_pred'].plot(t1_plot, ISI_recovery_pred_log[i, :]*100, color=np.array(colors_VA[i])/255, zorder=-5, linestyle=linestyle[i])
+    line_temp, = ax['ISI_recovery'].plot(t1_plot/1000, ISI_recovery_log[i, :]*100, color=np.array(colors_VA[i])/255, zorder=-5, linestyle=linestyle[i])
+    ax['ISI_recovery_pred'].plot(t1_plot/1000, ISI_recovery_pred_log[i, :]*100, color=np.array(colors_VA[i])/255, zorder=-5, linestyle=linestyle[i])
     line.append(line_temp)
 
 # add ticks
@@ -756,7 +796,8 @@ ax['broadband'].set_xticklabels([])
 ax['broadband'].legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left", borderaxespad=0, ncol=4, frameon=False, fontsize=fontsize_legend)
 
 ax['broadband_pred'].set_xticks(xtick_idx)
-ax['broadband_pred'].set_xticklabels(label_tempCond, fontsize=fontsize_label)
+ax['broadband_pred'].set_xticklabels(np.tile(x_label_single, 6))
+ax['broadband_pred'].set_xlabel('Time (ms)', fontsize=fontsize_label)
 
 # plot bargraph (slope log-linear fit)
 error_min = adaptation_CI[:, 0]*100
@@ -793,9 +834,11 @@ plt.savefig(dir+'mkFigure/Fig5_6_' + img_type + '.svg', format='svg', bbox_inche
 plt.savefig(dir+'mkFigure/Fig5_6_' + img_type, dpi=300, bbox_inches='tight')
 # plt.show()
 
-
 ############################################################################
 ######################################################## STATISTICAL TESTING
+
+alpha = 0.05
+Bonferroni = 6
 
 metrics = ['Avg. adaptation', 'Intercept']
 for i in range(2):
@@ -814,7 +857,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('V1-3 vs. ventral: ', p)
+        if p < alpha:
+            print('V1-3 vs. VOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('V1-3 vs. VOTC: ', p)
 
         # early vs. LO
         sample1 = adaptation_medians[0, :]
@@ -822,7 +868,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('V1-3 vs. LO: ', p)
+        if p < alpha:
+            print('V1-3 vs. LOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('V1-3 vs. LOTC: ', p)
 
         # ventral vs. LO
         sample1 = adaptation_medians[1, :]
@@ -830,7 +879,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('ventral vs. LO: ', p)
+        if p < alpha:
+            print('VOTC vs. LOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('VOTC vs. LOTC: ', p)
 
         print('#'*30)
         print('MODEL')
@@ -841,7 +893,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('V1-3 vs. ventral: ', p)
+        if p < alpha:
+            print('V1-3 vs. VOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('V1-3 vs. VOTC: ', p)
 
         # early vs. LO
         sample1 = adaptation_pred_medians[0, :]
@@ -849,7 +904,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('V1-3 vs. LO: ', p)
+        if p < alpha:
+            print('V1-3 vs. LOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('V1-3 vs. LOTC: ', p)
 
         # ventral vs. LO
         sample1 = adaptation_pred_medians[1, :]
@@ -857,7 +915,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('ventral vs. LO: ', p)
+        if p < alpha:
+            print('VOTC vs. LOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('VOTC vs. LOTC: ', p)
 
     elif i == 1: # intercept`
 
@@ -870,7 +931,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('V1-3 vs. ventral: ', p)
+        if p < alpha:
+            print('V1-3 vs. VOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('V1-3 vs. VOTC: ', p)
 
         # early vs. LO
         sample1 = intercept_medians[0, :]
@@ -878,7 +942,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('V1-3 vs. LO: ', p)
+        if p < alpha:
+            print('V1-3 vs. LOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('V1-3 vs. LOTC: ', p)
 
         # ventral vs. LO
         sample1 = intercept_medians[1, :]
@@ -886,7 +953,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('ventral vs. LO: ', p)
+        if p < alpha:
+            print('VOTC vs. LOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('VOTC vs. LOTC: ', p)
 
         print('#'*30)
         print('MODEL')
@@ -897,7 +967,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('V1-3 vs. ventral: ', p)
+        if p < alpha:
+            print('V1-3 vs. VOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('V1-3 vs. VOTC: ', p)
 
         # early vs. LO
         sample1 = intercept_pred_medians[0, :]
@@ -905,7 +978,10 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('V1-3 vs. LO: ', p)
+        if p < alpha:
+            print('V1-3 vs. LOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('V1-3 vs. LOTC: ', p)
 
         # ventral vs. LO
         sample1 = intercept_pred_medians[1, :]
@@ -913,4 +989,7 @@ for i in range(2):
         param_diffs = sample1 - sample2
 
         p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-        print('ventral vs. LO: ', p)
+        if p < alpha:
+            print('VOTC vs. LOTC: ', p, ' SIGNIFICANT')
+        else:
+            print('VOTC vs. LOTC: ', p)

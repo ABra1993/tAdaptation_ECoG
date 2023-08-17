@@ -15,7 +15,7 @@ Description: creates a pandas DataFrame holidng the samples (72 time courses) th
 """
 
 # define root directory
-dir = '/home/amber/OneDrive/code/git_nAdaptation_ECoG/'
+dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
 
 ##### SPECIFY ELECTRODE TYPE
 electrode_type = 'visuallyResponsive'
@@ -43,7 +43,7 @@ df = pd.DataFrame(columns=['trial_type', 'img_cat', 'temp_cond'] + t_index)
 df['trial_type'] = np.repeat(trial_type, len(img_cat)*len(temp_cond))
 df['img_cat'] = np.tile(np.repeat(img_cat, len(temp_cond)), 2)
 df['temp_cond'] = np.tile(temp_cond_index, len(trial_type)*len(img_cat))
-# print(df)
+print(df)
 
 # retrieve info
 current_subject = ''
