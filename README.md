@@ -5,7 +5,7 @@ This repository is included in the following paper:
 
 and contains data analysis of intracranial electroencephalography (iEEG) data with the goal to investigate how neural responses adapt to prolonged and repeated stimulus presentations across the human visual cortex. In addition, to investigate the neural computations underlying adaptation, responses are predicted using a model of delayed divisive normalization (DN).
 
-The neural data that is required to create the figures will be made available later.
+The neural data that is required for the analyzing, modelling and creating of the figures will be made available later.
 
 Structure
 ------------
@@ -22,7 +22,15 @@ Clone the git repository to create a local copy with the following command:
 
     $ git clone git@github.com:ABra1993/tAdaptation_ECoG.git
 
-and set the directory where the folder is located in ```setDir.txt``` (e.g. *home/user/tAdaptation_ECoG/*)
+and set the directory where the GitHub repository is located by
+
+     echo -e DIR > setDir.txt
+
+where DIR is the directory's location (e.g. ```DIR =``` *home/Users/tAdaptation_ECoG/*). In addition, to create Figure 2 (```mkFigure2.py```) you also need acces to the FreeSurfer files which is done by:
+
+     echo -e DIR > setDir_FreeSurfer.txt
+
+where DIR is the FreeSurfer directory (e.g. ```DIR = ``` */Users/derivatives/freesurfer/*)
 
 References
 ------------

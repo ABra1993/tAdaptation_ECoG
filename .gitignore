@@ -1,6 +1,7 @@
-setDir
 subject_data
 mkFigure/modelFit
 modelFit
 models/__pycache__
 __pycache__
+setDir.txt
+setDir_FreeSurfer.txt
