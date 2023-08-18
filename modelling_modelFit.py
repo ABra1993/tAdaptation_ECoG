@@ -59,8 +59,8 @@ sample_rate     = 512
 nFolds          = 12
 
 # set model parameters
-model = 'DN'
-# model = 'csDN'
+# model = 'DN'
+model = 'csDN'
 # model = 'csDN_withoutGeneralScaling'
 if model not in ['DN', 'csDN', 'csDN_withoutGeneralScaling']:
     sys.exit('\n Model does not exist, choose one of the following ["DN", "DN_cs"] \n')
