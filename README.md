@@ -9,11 +9,11 @@ The neural data that is required to create the figures will be made available la
 
 Structure
 ------------
-The main directory contains scripts used for preprocessing (```analysis_*.py```), including electrode and epochs, and baseline correction. Scripts used for fitting the computational models are denoted with ```modelling_*```  and the scripts used to create the figures as presented in the paper are denoted with ```mkFigure*.py```. In addition, the repository contains the following directories:
+The main directory contains scripts used for preprocessing (```analysis_*.py```), including electrode and epochs, and baseline correction. Scripts used for fitting the computational models are denoted with ```modelling_*```  and the scripts used to create the figures as presented in the paper are denoted with ```mkFigure*.py```. The ```utils.py``` contains helper functions. In addition, the repository contains the following directories:
 
 * **mkFigure**: contains the figures as presented in the paper (in *.png* and *.svg*) and figures (subfolder *modelFit*) showing the modelFit including example timecourses derived from the iEEG data and DN model.
 
-* **models**: Implementation of the DN model receiving a stimulus timecourse and subsequently predicts the neural response. One model implementation was previously described in Zhou et al (2019) en Groen et al. (2022) (```DN.py```). In addition, an augmented version of the model (```csDN.py```) scales the stimulus course depending on the image category the stimulus belongs to (e.g. face, scene) to account for category-selectivity. A third implementation scales the stimulus according to image category, but omits the general scaling (```csDN_withoutGeneralScaling.py```).
+* **models**: Implementation of the DN model receiving a stimulus timecourse and subsequently predicts the neural response. One model implementation was previously described in Zhou et al (2019) en Groen et al. (2022) (```DN.py```). In addition, an augmented version of the model (```csDN.py```) scales the stimulus course depending on the image category the stimulus belongs to (e.g. face, scene) to account for category-selectivity. A third implementation scales the stimulus according to image category, but omits the general scaling (```csDN_withoutGeneralScaling.py```, not included in the paper).
 
 * **variables**: files containing the information about the experimental settings. 
 
