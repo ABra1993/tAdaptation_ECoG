@@ -26,8 +26,8 @@ Author: A. Brands
 ##############################################################################################################
 
 # define root directory
-dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
-# dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
+file = open('setDir.txt')
+dir = file.readline()
 
 # specifiy the trial types
 # img_type = 'all'

@@ -16,9 +16,9 @@ Description:
 
 """
 
-# define root
-# dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
-dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
+# define root directory
+file = open('setDir.txt')
+dir = file.readline()
 
 # import timepoints of on- and offset of stimulus for one and twopulse trials
 t                         = np.loadtxt(dir+'variables/t.txt', dtype=float)

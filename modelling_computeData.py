@@ -15,7 +15,8 @@ Description: creates a pandas DataFrame holidng the samples (72 time courses) th
 """
 
 # define root directory
-dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
+file = open('setDir.txt')
+dir = file.readline()
 
 ##### SPECIFY ELECTRODE TYPE
 electrode_type = 'visuallyResponsive'

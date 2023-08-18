@@ -20,7 +20,8 @@ Description: Cross-validation of the model (Fit-then-average procedure, where pa
 """
 
 # define root directory
-dir = '/home/amber/OneDrive/code/nAdaptation_ECoG_git/'
+file = open('setDir.txt')
+dir = file.readline()
 
 ##### SPECIFY ELECTRODE TYPE
 # electrode_type = 'visuallyResponsive'
@@ -44,7 +45,6 @@ elif electrode_type == 'categorySelective':
 
 # count electrodes
 n_electrodes = len(electrodes)
-# n_electrodes = 1
 
 # type of trials
 trial_type = ['onepulse', 'twopulse_repeat']
@@ -55,14 +55,13 @@ r2_per_test = ['r2_1', 'r2_2', 'r2_3', 'r2_4', 'r2_5', 'r2_6']
 
 # model hyperparameters
 max_nfev        = 1000
-# max_nfev        = 1
 sample_rate     = 512
 nFolds          = 12
 
 # set model parameters
-# model = 'DN'
+model = 'DN'
 # model = 'csDN'
-model = 'csDN_withoutGeneralScaling'
+# model = 'csDN_withoutGeneralScaling'
 if model not in ['DN', 'csDN', 'csDN_withoutGeneralScaling']:
     sys.exit('\n Model does not exist, choose one of the following ["DN", "DN_cs"] \n')
 
@@ -172,7 +171,7 @@ def model_fit(i):
 
     axs[0].legend(fontsize=6)
     plt.tight_layout()
-    plt.savefig(dir+'modelFit/' + electrode_type + '/figures/' + subject + '_' + electrode_name + '_modelFit_' + model)
+    plt.savefig(dir+'mkFigure/modelFit/' + electrode_type + '/' + subject + '_' + electrode_name + '_modelFit_' + model)
     plt.close()
 
     # print
@@ -181,100 +180,100 @@ def model_fit(i):
     # fit full model
     param_pd.loc[0, params_names] = res.x
 
-    # nfold cv
-    r_sq_temp = np.zeros((nFolds)) 
-    param_pd_temp = np.zeros((nFolds, len(params_names)))
-    for fold_idx in range(nFolds): # cross-validate leave-one-out approach
+    # # nfold cv
+    # r_sq_temp = np.zeros((nFolds)) 
+    # param_pd_temp = np.zeros((nFolds, len(params_names)))
+    # for fold_idx in range(nFolds): # cross-validate leave-one-out approach
 
-        # get test indices (one sample per image category) and create train data (pseudo-random held-out data)
-        test_idx = []
-        for j in range(len(img_cat)):
-            test_idx.append(random.sample(y_idx_per_cat[j], 1)[0])          # choose random test sample
-            y_idx_per_cat[j].remove(test_idx[j])                            # remove from test indices
+    #     # get test indices (one sample per image category) and create train data (pseudo-random held-out data)
+    #     test_idx = []
+    #     for j in range(len(img_cat)):
+    #         test_idx.append(random.sample(y_idx_per_cat[j], 1)[0])          # choose random test sample
+    #         y_idx_per_cat[j].remove(test_idx[j])                            # remove from test indices
 
-        # TEST indices
-        train_idx = np.arange(len(stim)).tolist()
-        train_idx.remove(test_idx[0])
-        train_idx.remove(test_idx[1])
-        train_idx.remove(test_idx[2])
-        train_idx.remove(test_idx[3])
-        train_idx.remove(test_idx[4])
-        train_idx.remove(test_idx[5])
+    #     # TEST indices
+    #     train_idx = np.arange(len(stim)).tolist()
+    #     train_idx.remove(test_idx[0])
+    #     train_idx.remove(test_idx[1])
+    #     train_idx.remove(test_idx[2])
+    #     train_idx.remove(test_idx[3])
+    #     train_idx.remove(test_idx[4])
+    #     train_idx.remove(test_idx[5])
 
-        # select training and test data
-        X_train = np.array(stim.loc[train_idx, t_index])
-        y_train = np.array(y.iloc[train_idx, 2:2+len(t_index)])
+    #     # select training and test data
+    #     X_train = np.array(stim.loc[train_idx, t_index])
+    #     y_train = np.array(y.iloc[train_idx, 2:2+len(t_index)])
 
-        X_test = np.array(stim.loc[test_idx, t_index])
-        y_test = np.array(y.iloc[test_idx, 2:2+len(t_index)])
+    #     X_test = np.array(stim.loc[test_idx, t_index])
+    #     y_test = np.array(y.iloc[test_idx, 2:2+len(t_index)])
 
-        # determine conditions
-        if (model == 'csDN') | (model == 'csDN_withoutGeneralScaling'):
-            info = y.loc[train_idx, ['trial_type', 'temp_cond', 'img_cat']]
-            info.reset_index(inplace=True, drop=True)
+    #     # determine conditions
+    #     if (model == 'csDN') | (model == 'csDN_withoutGeneralScaling'):
+    #         info = y.loc[train_idx, ['trial_type', 'temp_cond', 'img_cat']]
+    #         info.reset_index(inplace=True, drop=True)
 
-        # fit model
-        np.seterr(divide='ignore', invalid='ignore') # inhibit printing division errors
-        if model == 'DN':
-            res = optimize.least_squares(objective_DN, x0, args=(X_train, y_train, sample_rate), max_nfev=max_nfev, bounds=(lb, ub))
-        elif model == 'csDN':
-            res = optimize.least_squares(objective_csDN, x0, args=(X_train, y_train, info, sample_rate, dir), max_nfev=max_nfev, bounds=(lb, ub))
-        elif model == 'csDN_withoutGeneralScaling':
-            res = optimize.least_squares(objective_csDN_withoutGenerelScaling, x0, args=(X_train, y_train, info, sample_rate, dir), max_nfev=max_nfev, bounds=(lb, ub))
+    #     # fit model
+    #     np.seterr(divide='ignore', invalid='ignore') # inhibit printing division errors
+    #     if model == 'DN':
+    #         res = optimize.least_squares(objective_DN, x0, args=(X_train, y_train, sample_rate), max_nfev=max_nfev, bounds=(lb, ub))
+    #     elif model == 'csDN':
+    #         res = optimize.least_squares(objective_csDN, x0, args=(X_train, y_train, info, sample_rate, dir), max_nfev=max_nfev, bounds=(lb, ub))
+    #     elif model == 'csDN_withoutGeneralScaling':
+    #         res = optimize.least_squares(objective_csDN_withoutGenerelScaling, x0, args=(X_train, y_train, info, sample_rate, dir), max_nfev=max_nfev, bounds=(lb, ub))
 
-        # retrieve parameters
-        popt = res.x
+    #     # retrieve parameters
+    #     popt = res.x
 
-        # print progress
-        print(30*'-')
-        print('Fitted params for electrode: ' + electrode_name + ' (' + subject + '):')
-        print('(model: ' + model.capitalize() + ')\n')
-        for k in range(len(params_names)):
-            print(params_names[k] + ': ' + str(popt[k]))
-        param_pd_temp[fold_idx, :] = popt
-        print(30*'-')
+    #     # print progress
+    #     print(30*'-')
+    #     print('Fitted params for electrode: ' + electrode_name + ' (' + subject + '):')
+    #     print('(model: ' + model.capitalize() + ')\n')
+    #     for k in range(len(params_names)):
+    #         print(params_names[k] + ': ' + str(popt[k]))
+    #     param_pd_temp[fold_idx, :] = popt
+    #     print(30*'-')
 
-        # test on held-out set
-        r_sq_per_test = np.zeros(len(X_test))
-        for k in range(len(X_test)):
+    #     # test on held-out set
+    #     r_sq_per_test = np.zeros(len(X_test))
+    #     for k in range(len(X_test)):
 
-            # cross-validate
-            if model == 'DN':
-                pred_temp = model_DN(X_test[k], sample_rate, popt)
-            elif model == 'csDN':
-                _, pred_temp = model_csDN(X_test[k], stim.loc[test_idx[k], 'trial_type'], int(stim.loc[test_idx[k], 'temp_cond']), stim.loc[test_idx[k], 'img_cat'], sample_rate, popt, dir)
-            elif model == 'csDN_withoutGeneralScaling':
-                _, pred_temp = model_csDN_withoutGeneralScaling(X_test[k], stim.loc[test_idx[k], 'trial_type'], int(stim.loc[test_idx[k], 'temp_cond']), stim.loc[test_idx[k], 'img_cat'], sample_rate, popt, dir)
+    #         # cross-validate
+    #         if model == 'DN':
+    #             pred_temp = model_DN(X_test[k], sample_rate, popt)
+    #         elif model == 'csDN':
+    #             _, pred_temp = model_csDN(X_test[k], stim.loc[test_idx[k], 'trial_type'], int(stim.loc[test_idx[k], 'temp_cond']), stim.loc[test_idx[k], 'img_cat'], sample_rate, popt, dir)
+    #         elif model == 'csDN_withoutGeneralScaling':
+    #             _, pred_temp = model_csDN_withoutGeneralScaling(X_test[k], stim.loc[test_idx[k], 'trial_type'], int(stim.loc[test_idx[k], 'temp_cond']), stim.loc[test_idx[k], 'img_cat'], sample_rate, popt, dir)
                 
-            temp = r_squared(y_test[k], pred_temp)
-            r_sq_per_test[k] = np.round(temp, 3)
-            r_sq_fold_pd.loc[fold_idx, r2_per_fold[k]] = np.round(temp, 3)            
+    #         temp = r_squared(y_test[k], pred_temp)
+    #         r_sq_per_test[k] = np.round(temp, 3)
+    #         r_sq_fold_pd.loc[fold_idx, r2_per_fold[k]] = np.round(temp, 3)            
 
-        # save cv r2
-        r_sq_temp[fold_idx] = np.round(np.mean(r_sq_per_test), 4)
+    #     # save cv r2
+    #     r_sq_temp[fold_idx] = np.round(np.mean(r_sq_per_test), 4)
 
-        # print progress
-        print('Fold ' + str(fold_idx+1) + ': R2 for (', subject + ',', electrode_name, ') held-out data is', np.round(r_sq_temp[fold_idx], 2), '.')
+    #     # print progress
+    #     print('Fold ' + str(fold_idx+1) + ': R2 for (', subject + ',', electrode_name, ') held-out data is', np.round(r_sq_temp[fold_idx], 2), '.')
 
-        # update fold
-        r_sq_pd.loc[0, r2_per_fold[fold_idx]] = np.round(np.mean(r_sq_per_test), 4)
-        r_sq_fold_pd.loc[fold_idx, 'r2'] = np.round(np.mean(r_sq_per_test), 4)
+    #     # update fold
+    #     r_sq_pd.loc[0, r2_per_fold[fold_idx]] = np.round(np.mean(r_sq_per_test), 4)
+    #     r_sq_fold_pd.loc[fold_idx, 'r2'] = np.round(np.mean(r_sq_per_test), 4)
 
-    # average prediction for held-out set
-    r_sq_mean = np.round(np.mean(r_sq_temp), 4)
-    r_sq_pd.loc[:, 'r2'] = r_sq_mean
-    param_pd.loc[:, 'r2'] = r_sq_mean
-    print(param_pd)
+    # # average prediction for held-out set
+    # r_sq_mean = np.round(np.mean(r_sq_temp), 4)
+    # r_sq_pd.loc[:, 'r2'] = r_sq_mean
+    # param_pd.loc[:, 'r2'] = r_sq_mean
+    # print(param_pd)
     
-    r_sq_pd.to_csv(dir+'modelFit/' + electrode_type + '/' + subject + '_' + electrode_name + '/r_sq_' + model + '.txt', sep=' ', header=True, index=False)
-    r_sq_fold_pd.to_csv(dir+'modelFit/' + electrode_type + '/' + subject + '_' + electrode_name + '/r_sq_per_fold_' + model + '.txt', sep=' ', header=True, index=False)
-    param_pd.to_csv(dir+'modelFit/' + electrode_type + '/' + subject + '_' + electrode_name + '/param_' + model + '.txt', sep=' ', header=True, index=False)
+    # r_sq_pd.to_csv(dir+'modelFit/' + electrode_type + '/' + subject + '_' + electrode_name + '/r_sq_' + model + '.txt', sep=' ', header=True, index=False)
+    # r_sq_fold_pd.to_csv(dir+'modelFit/' + electrode_type + '/' + subject + '_' + electrode_name + '/r_sq_per_fold_' + model + '.txt', sep=' ', header=True, index=False)
+    # param_pd.to_csv(dir+'modelFit/' + electrode_type + '/' + subject + '_' + electrode_name + '/param_' + model + '.txt', sep=' ', header=True, index=False)
 
-    # print progress
-    print('\n')
-    print(60*'#')
-    print('Done! R2 for (', subject + ',', electrode_name, ') test data is', np.round(np.mean(r_sq_temp), 2), '.')
-    print(60*'#', '\n')
+    # # print progress
+    # print('\n')
+    # print(60*'#')
+    # print('Done! R2 for (', subject + ',', electrode_name, ') test data is', np.round(np.mean(r_sq_temp), 2), '.')
+    # print(60*'#', '\n')
 
 if __name__ == '__main__':
     pool = multiprocessing.Pool()

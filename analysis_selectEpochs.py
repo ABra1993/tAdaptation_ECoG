@@ -12,7 +12,8 @@ Description: excludes epochs based on maximal response
 """
 
 # define root directory
-dir = '/home/amber/OneDrive/code/git_nAdaptation_ECoG/'
+file = open('setDir.txt')
+dir = file.readline()
 
 # threshold for epoch selection (n x standard deviation)
 n_std = 2

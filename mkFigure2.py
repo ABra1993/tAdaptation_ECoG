@@ -20,8 +20,8 @@ Author: A. Brands
 ##############################################################################################################
 
 # define root directory
-# dir = '/home/amber/OneDrive/code/git_nAdaptation_ECoG/'
-dir = '/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/nAdaptation_ECoG_git/'
+file = open('setDir.txt')
+dir = file.readline()
 
 # define Freesurfer directory
 # dir_surfdrive = '/home/amber/ownCloud/Shared/ECoG_data/data/derivatives/freesurfer/'

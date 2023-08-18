@@ -13,8 +13,9 @@ visual areas based on anatomc (Benson et al., 2014) or probabilistic atlas (Wang
 
 """
 
-# DEFINE ROOT DIRECTORY
-dir = '/home/amber/OneDrive/code/git_nAdaptation_ECoG/'
+# define root directory
+file = open('setDir.txt')
+dir = file.readline()
 
 ##### SPECIFY ELECTRODE TYPE
 # electrode_type = 'visualllyResponsive'

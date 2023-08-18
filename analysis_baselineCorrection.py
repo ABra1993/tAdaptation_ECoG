@@ -13,7 +13,8 @@ Description: Applies a normalization to the epoched time courses per run based o
 """
 
 # define root directory
-dir = '/home/amber/OneDrive/code/git_nAdaptation_ECoG/'
+file = open('setDir.txt')
+dir = file.readline()
 
 # user-defined values (ONLY CHANGE CODE HERE)
 subjects = ['sub-p11', 'sub-p12', 'sub-p13', 'sub-p14']
