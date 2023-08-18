@@ -24,8 +24,8 @@ file = open('setDir.txt')
 dir = file.readline()
 
 ##### SPECIFY ELECTRODE TYPE
-# electrode_type = 'visuallyResponsive'
-electrode_type = 'categorySelective'
+electrode_type = 'visuallyResponsive'
+# electrode_type = 'categorySelective'
 
 # import variables
 img_cat     = np.loadtxt(dir+'variables/cond_stim.txt', dtype=str)
@@ -61,7 +61,7 @@ nFolds          = 12
 # set model parameters
 model = 'DN'
 # model = 'csDN'
-model = 'csDN_withoutGeneralScaling'
+# model = 'csDN_withoutGeneralScaling'
 if model not in ['DN', 'csDN', 'csDN_withoutGeneralScaling']:
     sys.exit('\n Model does not exist, choose one of the following ["DN", "DN_cs"] \n')
 
@@ -171,7 +171,7 @@ def model_fit(i):
 
     axs[0].legend(fontsize=6)
     plt.tight_layout()
-    plt.savefig(dir+'modelFit/' + electrode_type + '/' + subject + '_' + electrode_name + '_modelFit_' + model)
+    plt.savefig(dir+'mkFigure/modelFit/' + electrode_type + '/' + subject + '_' + electrode_name + '_modelFit_' + model)
     plt.close()
 
     # print
