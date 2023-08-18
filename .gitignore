@@ -1,5 +1,6 @@
+setDir
 subject_data
 mkFigure/modelFit
 modelFit
-__pycache__
 models/__pycache__
+__pycache__
