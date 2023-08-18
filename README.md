@@ -26,11 +26,11 @@ and set the directory where the GitHub repository is located by
 
      echo -e DIR > setDir.txt
 
-where DIR is the directory's location (e.g. ```DIR =``` *home/Users/tAdaptation_ECoG/*). In addition, to create Figure 2 (```mkFigure2.py```) you also need acces to the FreeSurfer files which is done by:
+where DIR is the directory's location (e.g. ```DIR = home/Users/tAdaptation_ECoG/```). In addition, to create Figure 2 (```mkFigure2.py```) you also need acces to the FreeSurfer files which is done by:
 
      echo -e DIR > setDir_FreeSurfer.txt
 
-where DIR is the FreeSurfer directory (e.g. ```DIR = ``` */Users/derivatives/freesurfer/*)
+where DIR is the FreeSurfer directory (e.g. ```DIR = /Users/derivatives/freesurfer/```)
 
 References
 ------------
