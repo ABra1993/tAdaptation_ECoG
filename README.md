@@ -30,7 +30,7 @@ where DIR is the directory's location (e.g. ```DIR = home/Users/tAdaptation_ECoG
 
      echo -e DIR > setDir_FreeSurfer.txt
 
-where DIR is the FreeSurfer directory (e.g. ```DIR = /Users/derivatives/freesurfer/```)
+where DIR is the FreeSurfer directory (e.g. ```DIR = home/Users/derivatives/freesurfer/```)
 
 References
 ------------
