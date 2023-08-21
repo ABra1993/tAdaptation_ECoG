@@ -28,7 +28,8 @@ Author: A. Brands
 
 # define root directory
 file = open('setDir.txt')
-dir = file.readline()
+dir = file.readline().strip('\n')
+print(dir)
 
 ##############################################################################################################
 ##############################################################################################################
@@ -98,6 +99,8 @@ for i in range(len(models)):
 
     for j in range(len(stim_cat)-1):
 
+        print('Model: ', models[i], ', cat.: ', stim_cat[j])
+
         # plot stimulus
         axs[i, j].plot(t, stim, color='powderblue', label='Stimulus', lw=lw)
 
@@ -133,5 +136,5 @@ for i in range(len(models)):
 plt.tight_layout()
 plt.savefig(dir+'/mkFigure/SuppFig4.svg', format='svg')
 plt.savefig(dir+'/mkFigure/SuppFig4') 
-plt.show()
+# plt.show()
 

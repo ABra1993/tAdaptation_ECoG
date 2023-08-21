@@ -28,7 +28,8 @@ Author: A. Brands
 
 # define root directory
 file = open('setDir.txt')
-dir = file.readline()
+dir = file.readline().strip('\n')
+print(dir)
 
 # import info responsive electrodes showing category-selectivity
 threshold_d_prime = 0.5
@@ -85,6 +86,9 @@ ax['broadband_cat_sel_npref_repeat']        = fig.add_subplot(gs[0:4, 11:15])
 
 ax_broadband = [ax['broadband_cat_sel_repeat']]
 ax_broadband_cat_sel_repeat = [ax['broadband_cat_sel_pref_repeat'], ax['broadband_cat_sel_npref_repeat']]
+
+# seperate axes
+sns.despine(offset=10)
 
 # fontsizes
 fontsize_tick                       = 20

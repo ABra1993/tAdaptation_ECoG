@@ -20,12 +20,12 @@ Author: A. Brands
 ##############################################################################################################
 
 # define root directory
-file = open('setDir/setDir.txt')
+file = open('setDir.txt')
 dir = file.readline().strip('\n')
 print(dir)
 
 # define Freesurfer directory
-file = open('setDir/setDir_FreeSurfer.txt')
+file = open('setDir_FreeSurfer.txt')
 dir_surfdrive = file.readline()
 
 ##############################################################################################################

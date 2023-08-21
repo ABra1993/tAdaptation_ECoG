@@ -18,7 +18,8 @@ Description:
 
 # define root directory
 file = open('setDir.txt')
-dir = file.readline()
+dir = file.readline().strip('\n')
+print(dir)
 
 # import timepoints of on- and offset of stimulus for one and twopulse trials
 t                         = np.loadtxt(dir+'variables/t.txt', dtype=float)

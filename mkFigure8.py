@@ -28,7 +28,8 @@ Author: A. Brands
 
 # define root directory
 file = open('setDir.txt')
-dir = file.readline()
+dir = file.readline().strip('\n')
+print(dir)
 
 # import info responsive electrodes showing category-selectivity
 threshold_d_prime = 0.5

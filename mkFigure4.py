@@ -27,11 +27,12 @@ Author: A. Brands
 
 # define root directory
 file = open('setDir.txt')
-dir = file.readline()
+dir = file.readline().strip('\n')
+print(dir)
 
 # specifiy the trial types
-# img_type = 'all'
-img_type = 'preferred'
+img_type = 'all'
+# img_type = 'preferred'
 # img_type = 'nonpreferred'
 
 ##############################################################################################################
@@ -362,9 +363,6 @@ fig = plt.figure(figsize=(18, 10))
 gs = fig.add_gridspec(19, 22)
 ax = dict()
 
-# seperate axes
-sns.despine(offset=10)
-
 # set fontsizes
 fontsize_tick           = 20
 fontsize_legend         = 20
@@ -396,6 +394,9 @@ ax['ttp'] = fig.add_subplot(gs[12:19, 0:7])
 ax['fwhm'] = fig.add_subplot(gs[12:15, 9:22])
 ax['fwhm_pred'] = fig.add_subplot(gs[16:19, 9:22])
 ax_metrics = [ax['ttp'], ax['fwhm'], ax['fwhm_pred']]
+
+# seperate axes
+sns.despine(offset=10)
 
 # plot stimulus timecourse and time courses of neural data & model
 t_zero          = np.argwhere(t > 0)[0][0]
@@ -462,7 +463,6 @@ for j in range(len(tempCond)):
 # add legend and xticks
 ax['broadband'].legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left", borderaxespad=0, ncol=4, frameon=False, fontsize=fontsize_legend)
 
-
 # adjust axes
 ax['broadband'].spines['top'].set_visible(False)
 ax['broadband'].spines['right'].set_visible(False)
@@ -484,6 +484,9 @@ ax['broadband_model'].axhline(0, color='grey', lw=0.5, alpha=0.5)
 ax['broadband_model'].set_xticks(xtick_idx)
 ax['broadband_model'].set_xticklabels(np.tile(x_label_single, 6))
 # ax['broadband_model'].set_ylabel('DN model', fontsize=fontsize_label)
+
+# seperate axes
+sns.despine(offset=10)
 
 for i in range(len(ax_metrics)):
 
