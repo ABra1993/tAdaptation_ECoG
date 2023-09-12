@@ -37,8 +37,11 @@ print(dir)
 ##############################################################################################################
 
 # subject info
-subject             = 'sub-p14'
-electrode_name      = 'LT02'
+# subject             = 'sub-p14'
+# electrode_name      = 'LT02'
+
+subject             = 'sub-p12'
+electrode_name      = 'G01'
 
 # models
 models = ['DN', 'csDN']
@@ -126,15 +129,15 @@ for i in range(len(models)):
             # axs[i, j].legend(fontsize=fontsize_legend)
         # if i == (len(models))-1:
         #     axs[i, j].set_xlabel('Time (s)', fontsize=fontsize_label)
-        if i == 0:
-            axs[i, j].set_title(stim_cat[j] + '\n' + r' $R^{2}$: ' + str(np.round(r_2, 2)), fontsize=fontsize_title)
-        else:
-            axs[i, j].set_title(r' $R^{2}$: ' + str(np.round(r_2, 2)), fontsize=fontsize_title)
+        # if i == 0:
+        #     axs[i, j].set_title(stim_cat[j] + '\n' + r' $R^{2}$: ' + str(np.round(r_2, 2)), fontsize=fontsize_title)
+        # else:
+        axs[i, j].set_title(r' $R^{2}$: ' + str(np.round(r_2, 2)), fontsize=fontsize_title)
 
 
 # save figure
 plt.tight_layout()
 plt.savefig(dir+'/mkFigure/SuppFig4.svg', format='svg')
 plt.savefig(dir+'/mkFigure/SuppFig4') 
-# plt.show()
+plt.show()
 
