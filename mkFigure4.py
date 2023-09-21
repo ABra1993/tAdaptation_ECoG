@@ -6,6 +6,7 @@ import statistics
 from sklearn.utils import resample
 from scipy.ndimage import gaussian_filter1d
 import seaborn as sns
+import math
 
 # import functions and scripts
 from utils import generate_stimulus_timecourse, import_info, import_epochs, select_events, select_events_durationTrials, d_prime_perImgCat
@@ -31,9 +32,9 @@ dir = file.readline().strip('\n')
 print(dir)
 
 # specifiy the trial types
-img_type = 'all'
+# img_type = 'all'
 # img_type = 'preferred'
-# img_type = 'nonpreferred'
+img_type = 'nonpreferred'
 
 ##############################################################################################################
 ##############################################################################################################
@@ -80,7 +81,7 @@ B_repetitions       = 1000
 # info visual areas
 VA                  = ['V1-V3', 'VOTC', 'LOTC']
 colors_VA           = [[233, 167, 0], [48, 64, 141], [187, 38, 102]]
-VA_n                = np.zeros(len(VA))
+VA_n                = np.zeros(len(VA), dtype=int)
 
 # electrode coordinates
 electrodes_visuallyResponsive = pd.read_csv(dir+'subject_data/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
@@ -426,14 +427,25 @@ for i in range(len(tempCond)):
 
         # plot mean values (panel A)
         data_temp = gaussian_filter1d(np.mean(broadband_bootstrap[j][:, i, :], axis=0), 10)
+        # data_std = np.std(broadband_bootstrap[j][:, i, :], axis=0)/math.sqrt(VA_n[j])
         model_temp = gaussian_filter1d(np.mean(broadband_pred_bootstrap[j][:, i, :], axis=0), 10)
+        # model_std = np.std(broadband_pred_bootstrap[j][:, i, :], axis=0)/math.sqrt(VA_n[j])
 
         if i == 0:
-            ax['broadband'].plot(np.arange(end - start)+i*(end+sep), data_temp[start:end], color=np.array(colors_VA[j])/255, label=VA[j])
-            ax['broadband_model'].plot(np.arange(end - start)+i*(end+sep), model_temp[start:end], color=np.array(colors_VA[j])/255)
+            ax['broadband'].plot(np.arange(end - start)+i*(end+sep), data_temp[start:end], color=np.array(colors_VA[j])/255, label=VA[j], lw=0.5)
+            ax['broadband_model'].plot(np.arange(end - start)+i*(end+sep), model_temp[start:end], color=np.array(colors_VA[j])/255, lw=0.5)
         else:
-            ax['broadband'].plot(np.arange(end - start)+i*(end+sep), data_temp[start:end], color=np.array(colors_VA[j])/255)
-            ax['broadband_model'].plot(np.arange(end - start)+i*(end+sep), model_temp[start:end], color=np.array(colors_VA[j])/255)
+            ax['broadband'].plot(np.arange(end - start)+i*(end+sep), data_temp[start:end], color=np.array(colors_VA[j])/255, lw=0.5)
+            ax['broadband_model'].plot(np.arange(end - start)+i*(end+sep), model_temp[start:end], color=np.array(colors_VA[j])/255, lw=0.5)
+
+        # plot variance (68% confidence interval)
+        data_std_bootstrap = np.zeros((len(data_temp[start:end]), 2))
+        model_std_bootstrap = np.zeros((len(data_temp[start:end]), 2))
+        for t in range(len(data_temp[start:end])):
+            data_std_bootstrap[t, :] = np.nanpercentile(broadband_bootstrap[j][:, i, start+t], [CI_low, CI_high])
+            model_std_bootstrap[t, :] = np.nanpercentile(broadband_pred_bootstrap[j][:, i, start+t], [CI_low, CI_high])
+        ax['broadband'].fill_between(np.arange(end - start)+i*(end+sep), gaussian_filter1d(data_std_bootstrap[:, 0], 10), gaussian_filter1d(data_std_bootstrap[:, 1], 10), color=np.array(colors_VA[j])/255, edgecolor=None, alpha=0.3)
+        ax['broadband_model'].fill_between(np.arange(end - start)+i*(end+sep), gaussian_filter1d(model_std_bootstrap[:, 0], 10), gaussian_filter1d(model_std_bootstrap[:, 1], 10), color=np.array(colors_VA[j])/255, edgecolor=None, alpha=0.3)
 
 # plot time-to-peak (panel B) - neural data
 error_min = ttp_CI[:, 0]
@@ -542,8 +554,7 @@ plt.savefig(dir+'mkFigure/Fig4_' + img_type, dpi=300)
 ############################################################################
 ######################################################## STATISTICAL TESTING
 
-alpha = 0.05
-Bonferroni = 6
+alpha = 0.0083
 
 metrics = ['Time-to-peak', 'Full-width half max']
 for i in range(2):
@@ -640,7 +651,7 @@ for i in range(2):
             param_diffs = sample1 - sample2
 
             p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-            if p < alpha/Bonferroni:
+            if p < alpha:
                 print('V1-3 vs. VOTC: ', p, ' SIGNIFICANT')
             else:
                 print('V1-3 vs. VOTC: ', p)
@@ -651,7 +662,7 @@ for i in range(2):
             param_diffs = sample1 - sample2
 
             p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-            if p < alpha/Bonferroni:
+            if p < alpha:
                 print('V1-3 vs. LOTC: ', p, ' SIGNIFICANT')
             else:
                 print('V1-3 vs. LOTC: ', p)
@@ -662,7 +673,7 @@ for i in range(2):
             param_diffs = sample1 - sample2
 
             p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-            if p < alpha/Bonferroni:
+            if p < alpha:
                 print('VOTC vs. LOTC: ', p, ' SIGNIFICANT')
             else:
                 print('VOTC vs. LOTC: ', p)
@@ -680,7 +691,7 @@ for i in range(2):
             param_diffs = sample1 - sample2
 
             p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-            if p < alpha/Bonferroni:
+            if p < alpha:
                 print('V1-3 vs. VOTC: ', p, ' SIGNIFICANT')
             else:
                 print('V1-3 vs. VOTC: ', p)
@@ -691,7 +702,7 @@ for i in range(2):
             param_diffs = sample1 - sample2
 
             p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-            if p < alpha/Bonferroni:
+            if p < alpha:
                 print('V1-3 vs. LOTC: ', p, ' SIGNIFICANT')
             else:
                 print('V1-3 vs. LOTC: ', p)
@@ -702,7 +713,7 @@ for i in range(2):
             param_diffs = sample1 - sample2
 
             p = np.min([len(param_diffs[param_diffs < 0]), len(param_diffs[param_diffs > 0])])/B_repetitions
-            if p < alpha/Bonferroni:
+            if p < alpha:
                 print('VOTC vs. LOTC: ', p, ' SIGNIFICANT')
             else:
                 print('VOTC vs. LOTC: ', p)

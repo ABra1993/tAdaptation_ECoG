@@ -32,8 +32,8 @@ dir = file.readline().strip('\n')
 print(dir)
 
 # import info responsive electrodes showing category-selectivity
-threshold_d_prime = 0.5
-# threshold_d_prime = 0.75
+# threshold_d_prime = 0.5
+threshold_d_prime = 0.75
 # threshold_d_prime = 1.0
 
 ##############################################################################################################
@@ -314,6 +314,8 @@ for i in range(B_repetitions):
         adaptation_pred[i, j] = np.mean(ISI_recovery_pred[i, j, :])
         adaptation_pred_medians[j, :] = np.mean(ISI_recovery_pred[i, j, :])
 
+
+
 # compute spread
 for j in range(len(subtrials)):
 
@@ -416,7 +418,7 @@ ax['broadband'].spines['right'].set_visible(False)
 ax['broadband'].tick_params(axis='both', which='major', labelsize=fontsize_tick)
 # ax['broadband'].set_ylabel('Neural data', fontsize=fontsize_label)
 ax['broadband'].axhline(0, color='grey', lw=0.5, alpha=0.5)
-ax['broadband'].set_ylim(-0.2, 1.1)
+ax['broadband'].set_ylim(-0.2, 1.3)
 
 ax['broadband_pred'].spines['top'].set_visible(False)
 ax['broadband_pred'].spines['right'].set_visible(False)
@@ -424,7 +426,7 @@ ax['broadband_pred'].tick_params(axis='both', which='major',          labelsize=
 # ax['broadband_pred'].set_xlabel('ISI (ms)',                           fontsize=fontsize_label)
 # ax['broadband_pred'].set_ylabel('csDN model',         fontsize=fontsize_label)
 ax['broadband_pred'].axhline(0, color='grey', lw=0.5, alpha=0.5)
-ax['broadband_pred'].set_ylim(-0.2, 1.1)
+ax['broadband_pred'].set_ylim(-0.2, 1.3)
 
 for i in range(len(ax_broadband_isolation)):
     ax_broadband_isolation[i].spines['top'].set_visible(False)
@@ -537,9 +539,19 @@ for i in range(len(tempCond)):
             ax_broadband[j].axvspan(i*(end+sep) - start + timepoints_twopulse[i, 2], i*(
                 end+sep) - start + timepoints_twopulse[i, 3], facecolor='grey', alpha=0.2)
     
-        # retrieve data
+        # retrieve and normalize data
+        # broadband_bootstrap[:, j, i, :] = broadband_bootstrap[:, j, i, :]#/np.max(broadband_bootstrap[:, j, i, :], 0)
+        # broadband_bootstrap_pred[:, j, i, :] = broadband_bootstrap_pred[:, j, i, :]#/np.max(broadband_bootstrap_pred[:, j, i, :], 0)
+        print(np.max(broadband_bootstrap[:, j, i, :]))
+        print(np.max(broadband_bootstrap_pred[:, j, i, :]))
+
+        # average
         data_mean = gaussian_filter1d(np.mean(broadband_bootstrap[:, j, i, :], 0), 10)
         model_mean = gaussian_filter1d(np.mean(broadband_bootstrap_pred[:, j, i, :], 0), 10)
+        # data_mean = data_mean/np.max(data_mean)
+        # model_mean = model_mean/np.max(model_mean)
+        print(np.max(data_mean))
+        print(np.max(model_mean))
 
         # plot model and data
         if i == 0:
@@ -548,6 +560,17 @@ for i in range(len(tempCond)):
         else:
             ax_broadband[0].plot(np.arange(end - start)+i*(end+sep), data_mean[start:end]/max(data_mean[start:end]), color=color[j], lw=lw)
             ax_broadband[1].plot(np.arange(end - start)+i*(end+sep), model_mean[start:end]/max(model_mean[start:end]), color=color[j], lw=lw)
+
+        # plot variance (68% confidence interval)
+        data_std_bootstrap = np.zeros((len(data_mean[start:end]), 2))
+        model_std_bootstrap = np.zeros((len(data_mean[start:end]), 2))
+        for t in range(len(data_mean[start:end])):
+            data_std_bootstrap[t, :] = np.nanpercentile(broadband_bootstrap[:, j, i, start+t], [CI_low, CI_high])
+            model_std_bootstrap[t, :] = np.nanpercentile(broadband_bootstrap_pred[:, j, i, start+t], [CI_low, CI_high])
+        data_std_bootstrap = data_std_bootstrap/max(data_mean[start:end])
+        model_std_bootstrap = model_std_bootstrap/max(model_mean[start:end])
+        ax_broadband[0].fill_between(np.arange(end - start)+i*(end+sep), gaussian_filter1d(data_std_bootstrap[:, 0], 10), gaussian_filter1d(data_std_bootstrap[:, 1], 10), color=color[j], edgecolor=None, alpha=0.3)
+        ax_broadband[1].fill_between(np.arange(end - start)+i*(end+sep), gaussian_filter1d(model_std_bootstrap[:, 0], 10), gaussian_filter1d(model_std_bootstrap[:, 1], 10), color=color[j], edgecolor=None, alpha=0.3)
 
         # plot stimulus in isolation
         # NEURAL DATA

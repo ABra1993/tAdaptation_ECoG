@@ -421,6 +421,10 @@ for key, value in VA_name_idx.items():
             ISI_recovery_bootstrap_pred_current[i, j] = AUC2/AUC1
             adaptation_pred_temp[j] = AUC2/AUC1
 
+        # normalize responses to maximum (over all temporal conditions)
+        broadband_bootstrap_current[i, :, :] = broadband_bootstrap_current[i, :, :]/np.amax(broadband_bootstrap_current[i, :, :])    
+        broadband_bootstrap_pred_current[i, :, :] = broadband_bootstrap_pred_current[i, :, :]/np.amax(broadband_bootstrap_pred_current[i, :, :]) 
+    
         # NEURAL DATA
         # popt, _ = curve_fit(OF_ISI_recovery_log, tempCond, tempCond_recovery_bootstrap_current[i, :], p0, maxfev=100000) #, bounds=((0, 0), (np.inf, np.inf)))
         popt, _ = curve_fit(OF_ISI_recovery_log, tempCond/1000, adaptation_temp, p0, maxfev=1000) #, bounds=((0, 0), (np.inf, np.inf)))
@@ -721,31 +725,36 @@ for i in range(len(tempCond)):
                 end+sep) - start + timepoints_twopulse[i, 1], facecolor='grey', alpha=0.2)
             ax['broadband_pred'].axvspan(i*(end+sep) - start + timepoints_twopulse[i, 2], i*(
                 end+sep) - start + timepoints_twopulse[i, 3], facecolor='grey', alpha=0.2)
+            
+        # select data
+        data_temp = gaussian_filter1d(np.mean(broadband_bootstrap[j][:, i, :], axis=0), 10)
+        model_temp = gaussian_filter1d(np.mean(broadband_pred_bootstrap[j][:, i, :], axis=0), 10)
 
         # plot broadband timecourse per visual area
         if i == 0:
 
             # plot broadband per visual area
-            data_temp = np.mean(broadband_bootstrap[j][:, i, :], axis=0)
-            data_temp = gaussian_filter1d(data_temp[start:end]/max(data_temp[start:end]), 10)
-            ax['broadband'].plot(np.arange(end - start)+i*(end+sep), data_temp, color=np.array(colors_VA[j])/255, label=VA_labels[j], lw=lw)
+            ax['broadband'].plot(np.arange(end - start)+i*(end+sep), data_temp[start:end], color=np.array(colors_VA[j])/255, label=VA_labels[j], lw=lw)
 
             # plot broadband per visual area
-            model_temp = np.mean(broadband_pred_bootstrap[j][:, i, :], axis=0)
-            model_temp = gaussian_filter1d(model_temp[start:end]/max(model_temp[start:end]), 10)
-            ax['broadband_pred'].plot(np.arange(end - start)+i*(end+sep), model_temp, color=np.array(colors_VA[j])/255, label=VA_labels[j], lw=lw)
+            ax['broadband_pred'].plot(np.arange(end - start)+i*(end+sep), model_temp[start:end], color=np.array(colors_VA[j])/255, label=VA_labels[j], lw=lw)
 
         else:
 
             # plot broadband per visual area
-            data_temp = np.mean(broadband_bootstrap[j][:, i, :], axis=0)
-            data_temp = gaussian_filter1d(data_temp[start:end]/max(data_temp[start:end]), 10)
-            ax['broadband'].plot(np.arange(end - start)+i*(end+sep), data_temp, color=np.array(colors_VA[j])/255, lw=lw)
+            ax['broadband'].plot(np.arange(end - start)+i*(end+sep), data_temp[start:end], color=np.array(colors_VA[j])/255, lw=lw)
 
             # plot broadband per visual area
-            model_temp = np.mean(broadband_pred_bootstrap[j][:, i, :], axis=0)
-            model_temp = gaussian_filter1d(model_temp[start:end]/max(model_temp[start:end]), 10)
-            ax['broadband_pred'].plot(np.arange(end - start)+i*(end+sep), model_temp, color=np.array(colors_VA[j])/255, lw=lw)
+            ax['broadband_pred'].plot(np.arange(end - start)+i*(end+sep), model_temp[start:end], color=np.array(colors_VA[j])/255, lw=lw)
+
+        # plot variance (68% confidence interval)
+        data_std_bootstrap = np.zeros((len(data_temp[start:end]), 2))
+        model_std_bootstrap = np.zeros((len(data_temp[start:end]), 2))
+        for t in range(len(data_temp[start:end])):
+            data_std_bootstrap[t, :] = np.nanpercentile(broadband_bootstrap[j][:, i, start+t], [CI_low, CI_high])
+            model_std_bootstrap[t, :] = np.nanpercentile(broadband_pred_bootstrap[j][:, i, start+t], [CI_low, CI_high])
+        ax['broadband'].fill_between(np.arange(end - start)+i*(end+sep), gaussian_filter1d(data_std_bootstrap[:, 0], 10), gaussian_filter1d(data_std_bootstrap[:, 1], 10), color=np.array(colors_VA[j])/255, edgecolor=None, alpha=0.3)
+        ax['broadband_pred'].fill_between(np.arange(end - start)+i*(end+sep), gaussian_filter1d(model_std_bootstrap[:, 0], 10), gaussian_filter1d(model_std_bootstrap[:, 1], 10), color=np.array(colors_VA[j])/255, edgecolor=None, alpha=0.3)
 
         # plot stimulus in isolation
         # NEURAL DATA
@@ -838,8 +847,7 @@ plt.savefig(dir+'mkFigure/Fig5_6_' + img_type, dpi=300, bbox_inches='tight')
 ############################################################################
 ######################################################## STATISTICAL TESTING
 
-alpha = 0.05
-Bonferroni = 6
+alpha = 0.0083
 
 metrics = ['Avg. adaptation', 'Intercept']
 for i in range(2):
