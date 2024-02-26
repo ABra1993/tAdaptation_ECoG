@@ -12,7 +12,7 @@ import seaborn as sns
 # import functions and scripts
 from utils import generate_stimulus_timecourse, import_info, import_epochs, select_events, select_events_repetitionTrials, d_prime_perImgCat, estimate_first_pulse
 from modelling_utils_paramInit import paramInit
-from modelling_utils_fitObjective import model_csDN, model_DN, OF_ISI_recovery_log
+from modelling_utils_fitObjective import objective, model, OF_ISI_recovery_log
 
 
 """
@@ -32,8 +32,8 @@ dir = file.readline().strip('\n')
 print(dir)
 
 # import info responsive electrodes showing category-selectivity
-# threshold_d_prime = 0.5
-threshold_d_prime = 0.75
+threshold_d_prime = 0.5
+# threshold_d_prime = 0.75
 # threshold_d_prime = 1.0
 
 ##############################################################################################################
@@ -69,12 +69,17 @@ responsive_electrodes = responsive_electrodes[responsive_electrodes.preferred_ca
 responsive_electrodes.reset_index(drop=True, inplace=True)
 n_electrodes = len(responsive_electrodes)
 
+# initiate dataframe to store SNR values for preferred- and non-preferred image categories
+z_score = np.zeros((n_electrodes, 2))
+
 # define model
-# model = 'DN'
-model = 'csDN'
+model_type = 'DN'
+    
+# scaling
+scaling = 'P'
 
 # retrieve parameters
-params_names, _, _, _ = paramInit(model)
+params_names, _, _, _ = paramInit(model_type, scaling)
 sample_rate = 512
 
 # create stimulus timecourse
@@ -157,7 +162,7 @@ for i in range(n_electrodes):
     electrode_idx = int(responsive_electrodes.electrode_idx[i])
 
     # retrieve model parameters for current electrode
-    temp = pd.read_csv(dir+'modelFit/categorySelective/' + subject + '_' + electrode_name + '/param_' + model + '.txt', header=0, delimiter=' ', index_col=0)
+    temp = pd.read_csv(dir+'modelFit/categorySelective/' + subject + '_' + electrode_name + '/param_' + model_type + '_' + scaling + '.txt', header=0, delimiter=' ', index_col=0)
     temp.reset_index(inplace=True, drop=True)
     params_current = list(temp.loc[0, params_names])
 
@@ -209,15 +214,20 @@ for i in range(n_electrodes):
 
         # for 5 remaining img classes
         if j == 0:
-            _, broadband_pulse1_pred[i, j, :] = model_csDN(stim_onepulse, 'onepulse', 3, cat[j], sample_rate, params_current, dir)  
+            broadband_pulse1_pred[i, j, :] = model(model_type, scaling, stim_onepulse, sample_rate, params_current, dir, 'onepulse', 3, cat[j])
         elif j == 1:
             temp = np.zeros((len(stim_cat)-1, len(t))) # all image categories expect preferred
             num = 0
             for l in range(len(stim_cat)):
                 if stim_cat[l] != cat[0]:
-                    _, temp[num, :] = model_csDN(stim_onepulse, 'onepulse', 3, stim_cat[l], sample_rate, params_current, dir) 
+                    temp[num, :] = model(model_type, scaling, stim_onepulse, sample_rate, params_current, dir, 'onepulse', 3, stim_cat[l])
                     num+=1
             broadband_pulse1_pred[i, j, :] = np.mean(temp, 0)
+
+        # compute mean SNR over onepulse trials
+        std = np.std(broadband_pulse1_pred[i, j, :])
+        mean = np.mean(broadband_pulse1_pred[i, j, :])
+        z_score[i, j] = mean/std
 
         # select twouplse
         for k in range(len(tempCond)):
@@ -227,13 +237,14 @@ for i in range(n_electrodes):
 
             # MODEL
             if j == 0:
-                _, broadband_pred[i, j, k, :] = model_csDN(stim_twopulse[k, :], 'twopulse_repeat', k, cat[j], sample_rate, params_current, dir)  
+                broadband_pred[i, j, k, :] = model(model_type, scaling, stim_twopulse[k, :], sample_rate, params_current, dir, 'twopulse_repeat', k, cat[j])
+                
             elif j == 1:
                 temp = np.zeros((len(stim_cat)-1, len(t))) # all image categories expect preferred
                 num = 0
                 for l in range(len(stim_cat)):
                     if stim_cat[l] != cat[0]:
-                        _, temp[num, :] = model_csDN(stim_twopulse[k, :], 'twopulse_repeat', k, stim_cat[l], sample_rate, params_current, dir) 
+                        temp[num, :] = model(model_type, scaling, stim_twopulse[k, :], sample_rate, params_current, dir, 'twopulse_repeat', k, stim_cat[l])
                         num+=1
                 broadband_pred[i, j, k, :] = np.mean(temp, 0)
 
@@ -314,8 +325,6 @@ for i in range(B_repetitions):
         adaptation_pred[i, j] = np.mean(ISI_recovery_pred[i, j, :])
         adaptation_pred_medians[j, :] = np.mean(ISI_recovery_pred[i, j, :])
 
-
-
 # compute spread
 for j in range(len(subtrials)):
 
@@ -340,6 +349,12 @@ for j in range(len(subtrials)):
     for i in range(len(tempCond)):
         ISI_recovery_pred_avg[j, i] = np.mean(ISI_recovery_pred[:, j, i])
         ISI_recovery_pred_CI[j, i, :] = np.nanpercentile(ISI_recovery_pred[:, j, i], [CI_low, CI_high])
+
+# plot z-score
+for j in range(len(subtrials)):
+
+    print(subtrials[j])
+    print(np.round(np.mean(z_score[:, j]), 2))
 
 ############################################################################
 ################################################################## VISUALIZE
@@ -405,8 +420,8 @@ lw = 2
 s = 120
 
 # y limits
-y_lim_in_isolation = [[-0.2, 1.1], [-0.2, 1.1]]
-y_lim_recovery = [20, 120]
+y_lim_in_isolation = [[-0.5, 1.1], [-0.5, 1.1]]
+y_lim_recovery = [-20, 120]
 y_lim_metrics = [-0.5, 1.7]
 
 # compute timepoint of the start of both first and second pulse
@@ -418,7 +433,7 @@ ax['broadband'].spines['right'].set_visible(False)
 ax['broadband'].tick_params(axis='both', which='major', labelsize=fontsize_tick)
 # ax['broadband'].set_ylabel('Neural data', fontsize=fontsize_label)
 ax['broadband'].axhline(0, color='grey', lw=0.5, alpha=0.5)
-ax['broadband'].set_ylim(-0.2, 1.3)
+# ax['broadband'].set_ylim(-0.2, 1.3)
 
 ax['broadband_pred'].spines['top'].set_visible(False)
 ax['broadband_pred'].spines['right'].set_visible(False)
@@ -426,7 +441,7 @@ ax['broadband_pred'].tick_params(axis='both', which='major',          labelsize=
 # ax['broadband_pred'].set_xlabel('ISI (ms)',                           fontsize=fontsize_label)
 # ax['broadband_pred'].set_ylabel('csDN model',         fontsize=fontsize_label)
 ax['broadband_pred'].axhline(0, color='grey', lw=0.5, alpha=0.5)
-ax['broadband_pred'].set_ylim(-0.2, 1.3)
+# ax['broadband_pred'].set_ylim(-0.2, 1.3)
 
 for i in range(len(ax_broadband_isolation)):
     ax_broadband_isolation[i].spines['top'].set_visible(False)
@@ -542,24 +557,43 @@ for i in range(len(tempCond)):
         # retrieve and normalize data
         # broadband_bootstrap[:, j, i, :] = broadband_bootstrap[:, j, i, :]#/np.max(broadband_bootstrap[:, j, i, :], 0)
         # broadband_bootstrap_pred[:, j, i, :] = broadband_bootstrap_pred[:, j, i, :]#/np.max(broadband_bootstrap_pred[:, j, i, :], 0)
-        print(np.max(broadband_bootstrap[:, j, i, :]))
-        print(np.max(broadband_bootstrap_pred[:, j, i, :]))
+        # print(np.max(broadband_bootstrap[:, j, i, :]))
+        # print(np.max(broadband_bootstrap_pred[:, j, i, :]))
 
         # average
         data_mean = gaussian_filter1d(np.mean(broadband_bootstrap[:, j, i, :], 0), 10)
         model_mean = gaussian_filter1d(np.mean(broadband_bootstrap_pred[:, j, i, :], 0), 10)
         # data_mean = data_mean/np.max(data_mean)
         # model_mean = model_mean/np.max(model_mean)
-        print(np.max(data_mean))
-        print(np.max(model_mean))
+        # print(np.max(data_mean))
+        # print(np.max(model_mean))
+
+        # # plot model and data
+        # if i == 0:
+        #     ax_broadband[0].plot(np.arange(end - start)+i*(end+sep), data_mean[start:end]/max(data_mean[start:end]), color=color[j], label=labels[j].lower(), lw=lw)
+        #     ax_broadband[1].plot(np.arange(end - start)+i*(end+sep), model_mean[start:end]/max(model_mean[start:end]), color=color[j], label=labels[j].lower(), lw=lw)
+        # else:
+        #     ax_broadband[0].plot(np.arange(end - start)+i*(end+sep), data_mean[start:end]/max(data_mean[start:end]), color=color[j], lw=lw)
+        #     ax_broadband[1].plot(np.arange(end - start)+i*(end+sep), model_mean[start:end]/max(model_mean[start:end]), color=color[j], lw=lw)
+
+        # # plot variance (68% confidence interval)
+        # data_std_bootstrap = np.zeros((len(data_mean[start:end]), 2))
+        # model_std_bootstrap = np.zeros((len(data_mean[start:end]), 2))
+        # for t in range(len(data_mean[start:end])):
+        #     data_std_bootstrap[t, :] = np.nanpercentile(broadband_bootstrap[:, j, i, start+t], [CI_low, CI_high])
+        #     model_std_bootstrap[t, :] = np.nanpercentile(broadband_bootstrap_pred[:, j, i, start+t], [CI_low, CI_high])
+        # data_std_bootstrap = data_std_bootstrap/max(data_mean[start:end])
+        # model_std_bootstrap = model_std_bootstrap/max(model_mean[start:end])
+        # ax_broadband[0].fill_between(np.arange(end - start)+i*(end+sep), gaussian_filter1d(data_std_bootstrap[:, 0], 10), gaussian_filter1d(data_std_bootstrap[:, 1], 10), color=color[j], edgecolor=None, alpha=0.3)
+        # ax_broadband[1].fill_between(np.arange(end - start)+i*(end+sep), gaussian_filter1d(model_std_bootstrap[:, 0], 10), gaussian_filter1d(model_std_bootstrap[:, 1], 10), color=color[j], edgecolor=None, alpha=0.3)
 
         # plot model and data
         if i == 0:
-            ax_broadband[0].plot(np.arange(end - start)+i*(end+sep), data_mean[start:end]/max(data_mean[start:end]), color=color[j], label=labels[j].lower(), lw=lw)
-            ax_broadband[1].plot(np.arange(end - start)+i*(end+sep), model_mean[start:end]/max(model_mean[start:end]), color=color[j], label=labels[j].lower(), lw=lw)
+            ax_broadband[0].plot(np.arange(end - start)+i*(end+sep), data_mean[start:end], color=color[j], label=labels[j].lower(), lw=lw)
+            ax_broadband[1].plot(np.arange(end - start)+i*(end+sep), model_mean[start:end], color=color[j], label=labels[j].lower(), lw=lw)
         else:
-            ax_broadband[0].plot(np.arange(end - start)+i*(end+sep), data_mean[start:end]/max(data_mean[start:end]), color=color[j], lw=lw)
-            ax_broadband[1].plot(np.arange(end - start)+i*(end+sep), model_mean[start:end]/max(model_mean[start:end]), color=color[j], lw=lw)
+            ax_broadband[0].plot(np.arange(end - start)+i*(end+sep), data_mean[start:end], color=color[j], lw=lw)
+            ax_broadband[1].plot(np.arange(end - start)+i*(end+sep), model_mean[start:end], color=color[j], lw=lw)
 
         # plot variance (68% confidence interval)
         data_std_bootstrap = np.zeros((len(data_mean[start:end]), 2))
@@ -567,11 +601,11 @@ for i in range(len(tempCond)):
         for t in range(len(data_mean[start:end])):
             data_std_bootstrap[t, :] = np.nanpercentile(broadband_bootstrap[:, j, i, start+t], [CI_low, CI_high])
             model_std_bootstrap[t, :] = np.nanpercentile(broadband_bootstrap_pred[:, j, i, start+t], [CI_low, CI_high])
-        data_std_bootstrap = data_std_bootstrap/max(data_mean[start:end])
-        model_std_bootstrap = model_std_bootstrap/max(model_mean[start:end])
+        data_std_bootstrap = data_std_bootstrap
+        model_std_bootstrap = model_std_bootstrap
         ax_broadband[0].fill_between(np.arange(end - start)+i*(end+sep), gaussian_filter1d(data_std_bootstrap[:, 0], 10), gaussian_filter1d(data_std_bootstrap[:, 1], 10), color=color[j], edgecolor=None, alpha=0.3)
         ax_broadband[1].fill_between(np.arange(end - start)+i*(end+sep), gaussian_filter1d(model_std_bootstrap[:, 0], 10), gaussian_filter1d(model_std_bootstrap[:, 1], 10), color=color[j], edgecolor=None, alpha=0.3)
-
+        
         # plot stimulus in isolation
         # NEURAL DATA
         data_mean = gaussian_filter1d(np.mean(broadband_pulse2_bootstrap[:, j, i, :], 0)/max_data[j], 10)
@@ -660,8 +694,8 @@ ax['broadband_pred'].set_xticklabels(np.tile(x_label_single, 6))
 # save figure
 fig.align_ylabels()
 plt.tight_layout()
-plt.savefig(dir+'mkFigure/Fig8_' + str(threshold_d_prime).replace('.', '-') + '.png', dpi=300, bbox_inches='tight')
-plt.savefig(dir+'mkFigure/Fig8_' + str(threshold_d_prime).replace('.', '-') +'.svg', format='svg', bbox_inches='tight')
+plt.savefig(dir+'mkFigure/Fig8_' + str(threshold_d_prime).replace('.', '-') + '_P.png', dpi=300, bbox_inches='tight')
+plt.savefig(dir+'mkFigure/Fig8_' + str(threshold_d_prime).replace('.', '-') + '_P.svg', format='svg', bbox_inches='tight')
 # plt.show()
 
 ############################################################################

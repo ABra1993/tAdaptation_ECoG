@@ -2,142 +2,231 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import math
-import seaborn as sns
+from scipy.optimize import curve_fit
+import sys
 
+# import functions and scripts
 from utils import import_info, select_events, select_electrodes, import_epochs, recovery_perISI
-from utils import generate_stimulus_timecourse, r_squared
-from modelling_utils_fitObjective import objective_DN, objective_csDN, objective_csDN_withoutGenerelScaling, model_DN, model_csDN, model_csDN_withoutGeneralScaling
-
-from utils import generate_stimulus_timecourse, import_info, import_epochs, select_events, select_events_durationTrials, d_prime_perImgCat
-from modelling_utils_paramInit import paramInit
-# from models.Models_csDN import Models_csDN
-# from models.Models_DN import Models_DN
-from modelling_utils_fitObjective import model_csDN, model_DN
+from modelling_utils_fitObjective import OF_ISI_recovery_log
 
 """
-
 Author: A. Brands
 
-"""
+Description: 
 
-############################################################################################## ADAPT CODE HERE
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
+"""
 
 # define root directory
 file = open('setDir.txt')
 dir = file.readline().strip('\n')
 print(dir)
 
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-
-# subject info
-# subject             = 'sub-p14'
-# electrode_name      = 'LT02'
-
-subject             = 'sub-p12'
-electrode_name      = 'G01'
-
-# models
-models = ['DN', 'csDN']
-models_color = ['red', 'crimson']
-
-# create stimulus timecourse
-stim = generate_stimulus_timecourse('twopulse_repeat', 5, dir)
-
 # import timepoints of on- and offset of stimulus for one and twopulse trials
 t                         = np.loadtxt(dir+'variables/t.txt', dtype=float)
 timepoints_onepulse       = np.loadtxt(dir+'variables/timepoints_onepulse.txt', dtype=int)
+timepoints_twopulse       = np.loadtxt(dir+'variables/timepoints_twopulse.txt', dtype=int)
+ISI                       = np.loadtxt(dir+'variables/cond_temp.txt', dtype=float)
+label_ISI                 = np.array(np.array(ISI, dtype=int), dtype=str)
 time_window               = np.loadtxt(dir+'variables/time_window.txt', dtype=int)
-tempCond                  = np.loadtxt(dir+'variables/cond_temp.txt', dtype=float)
-label_tempCond            = np.array(np.array(tempCond, dtype=int), dtype=str)
 
-# get img. classes
-stim_cat                  = np.loadtxt(dir+'variables/cond_stim.txt', dtype=str)
+# define model
+cond                        = 4 # temporal condition (i.e. duration of the ISI)
+trial_onepulse              = 'onepulse'
+trials_twopulse             = ['onepulse-4', 'twopulse', 'twopulse_repeat']
 
-# plot cross validation
-fig, axs = plt.subplots(2, 5, figsize=(16, 5))
-
-# seperate axes
-sns.despine(offset=10)
-
-# set fontsizes
-fontsize_tick           = 15
-fontsize_legend         = 15
-fontsize_label          = 15
-fontsize_title          = 18
-
-lw = 2
+# subject info
+subject             = 'sub-p14'
+electrode_name      = 'LO02'
 
 # import info
 _, events, channels, _ = import_info(subject, dir)
 
-# import excluded trials
-excluded_epochs = pd.read_csv(dir+'subject_data/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
+# select electrode(s)
+electrode_idx = select_electrodes(channels, electrode_name)
+if electrode_idx == -1:
+    sys.exit('\n' + electrode_name + ' does not exist for ' +
+                subject + '. Please chose another electrode ... \n')
+
+# select twopulse events
+event_idx = []
+cond = None
+for j in range(len(trials_twopulse)):
+    if trials_twopulse[j] == 'onepulse-4':
+        temp = select_events(events, None, trials_twopulse[j], dir)
+        event_idx.append(temp)
+    else:
+        temp = select_events(events, 'TEMP', trials_twopulse[j], dir)
+        event_idx.append(temp)
+
+event_idx_onepulse = select_events(events, 'TEMP', 'onepulse', dir)
 
 # extract broadband data
-electrode_idx = select_electrodes(channels, electrode_name)
 epochs_b = import_epochs(subject, electrode_idx, dir)
-index_epochs_b = [j for j in range(len(events)) if excluded_epochs.iloc[electrode_idx, j] == 1]
-epochs_b.iloc[:, index_epochs_b] = np.nan
 
-# select electrode(s) and events
-event_idx = select_events(events, 'both', 'twopulse_repeat', dir)
+# plot ISI recovery
+recovery_from_adaptation, estimate_first_pulse = recovery_perISI(t, epochs_b, event_idx, 2, time_window, dir)
 
-for i in range(len(models)):
+# initiate (sub)plots
+fig = plt.figure(figsize=(22, 3))
+gs = fig.add_gridspec(5, 30)
+ax = dict()
 
-    # retrieve parameters
-    params_names, _, _, _ = paramInit(models[i])
-    sample_rate = 512
+# settings fontsizes
+fontsize_tick       = 10
+fontsize_legend     = 10
+fontsize_label      = 10
 
-    # retrieve model parameters for current electrode
-    temp = pd.read_csv(dir+'modelFit/visuallyResponsive/' + subject + '_' + electrode_name + '/param_' + models[i] + '.txt', header=0, delimiter=' ', index_col=0)
-    temp.reset_index(inplace=True,drop=True)
-    params_current = list(temp.loc[0, params_names])
+# plot specs/adjustments
+end = 600
+sep = 100
 
-    for j in range(len(stim_cat)-1):
+# initiate grids
+ax['broadband'] = fig.add_subplot(gs[0:2, 0:19])
+ax['broadband_sep'] = fig.add_subplot(gs[3:5, 0:19])
+ax['ISI_recovery'] = fig.add_subplot(gs[0:5, 21:28])
 
-        print('Model: ', models[i], ', cat.: ', stim_cat[j])
+# adjust axes
+ax['broadband'].spines['top'].set_visible(False)
+ax['broadband'].spines['right'].set_visible(False)
+ax['broadband'].tick_params(axis='both', which='major', labelsize=fontsize_tick)
+ax['broadband'].set_xlabel('Stimulus duration (ms)',                           fontsize=fontsize_label)
 
-        # plot stimulus
-        axs[i, j].plot(t, stim, color='powderblue', label='Stimulus', lw=lw)
+ax['broadband_sep'].spines['top'].set_visible(False)
+ax['broadband_sep'].spines['right'].set_visible(False)
+ax['broadband_sep'].tick_params(axis='both', which='major', labelsize=fontsize_tick)
+ax['broadband_sep'].set_xlabel('ISI (ms)',                           fontsize=fontsize_label)
 
-        # plot timecourse
-        data = np.nanmean(epochs_b[event_idx[j][5]], 1)
-        axs[i, j].plot(t, data, color='black', label='Neural data', lw=lw)
+ax['ISI_recovery'].spines['top'].set_visible(False)
+ax['ISI_recovery'].spines['right'].set_visible(False)
+ax['ISI_recovery'].tick_params(axis='both', which='major', labelsize=fontsize_tick)
+ax['ISI_recovery'].set_xlabel('ISI (ms)',                        fontsize=fontsize_label)
+ax['ISI_recovery'].set_ylabel('Recovery (%)', fontsize=fontsize_label)
 
-        # plot model timecourse
-        if models[i] == 'DN':
-            pred = model_DN(stim, sample_rate, params_current)
-        elif models[i] == 'csDN':
-            _, pred = model_csDN(stim, 'twopulse_repeat', 5, stim_cat[j], sample_rate, params_current, dir)
-        axs[i, j].plot(t, pred, color=models_color[i], label=models[i] + ' model', lw=lw)
+ymin = -1
+ymax = 30
+ax['broadband'].set_ylim(ymin, ymax)
+ax['broadband_sep'].set_ylim(ymin, ymax)
 
-        # compute coefficient of variation
-        r_2 = r_squared(data, pred)
+ax['broadband'].axhline(0, color='grey', lw=0.5, alpha=0.5)
+ax['broadband_sep'].axhline(0, color='grey', lw=0.5, alpha=0.5)   
 
-        # adjust axis
-        axs[i, j].set_ylim(-0.5, 12)
-        axs[i, j].tick_params(axis='both', which='major', labelsize=fontsize_tick)
-        # if j == 0:
-            # axs[i, j].set_ylabel('Change in broadband power', fontsize=fontsize_label)
-            # axs[i, j].legend(fontsize=fontsize_legend)
-        # if i == (len(models))-1:
-        #     axs[i, j].set_xlabel('Time (s)', fontsize=fontsize_label)
-        # if i == 0:
-        #     axs[i, j].set_title(stim_cat[j] + '\n' + r' $R^{2}$: ' + str(np.round(r_2, 2)), fontsize=fontsize_title)
-        # else:
-        axs[i, j].set_title(r' $R^{2}$: ' + str(np.round(r_2, 2)), fontsize=fontsize_title)
+# labels
+label_AUC = [r'AUC$_{1}$', 'AUC$_{2}$']
+label_points = [r'$\frac{AUC_{2}}{AUC_{1}}$']
 
+broadband_color1 = ['dodgerblue']
+broadband_fill1 = ['lightcyan'] 
+
+broadband_color2 = ['darkorange']
+broadband_fill2 = ['navajowhite']
+
+start_1 = timepoints_twopulse[0, 0]
+xtick_idx = []
+alpha = 0.1
+for i in range(len(ISI)):
+
+    # append x-tick
+    xtick_idx.append(i*(end+sep))
+
+    # retrieve timepoint
+    start_2 = timepoints_twopulse[i, 2]
+
+    # retrieve data
+    data_second_pulse = np.nanmean(epochs_b[event_idx[2][i]], axis=1)
+    data_second_pulse_sep = np.nanmean(epochs_b[event_idx[2][i]], axis=1) - estimate_first_pulse
+
+    # plot stimulus
+    ax['broadband'].axvspan(i*(end+sep) - start_1 + timepoints_twopulse[i, 0], 
+                            i*(end+sep) - start_1 + timepoints_twopulse[i, 1], facecolor='grey', alpha=0.2)
+    ax['broadband'].axvspan(i*(end+sep) - start_1 + timepoints_twopulse[i, 2], 
+                            i*(end+sep) - start_1 + timepoints_twopulse[i, 3], facecolor='grey', alpha=0.2)
+
+    ax['broadband_sep'].axvspan(i*(end+sep) - start_1 + timepoints_twopulse[i, 0], 
+                            i*(end+sep) - start_1 + timepoints_twopulse[i, 1], facecolor='grey', alpha=0.2)
+    ax['broadband_sep'].axvspan(i*(end+sep) - start_1 + timepoints_twopulse[i, 2], 
+                            i*(end+sep) - start_1 + timepoints_twopulse[i, 3], facecolor='grey', alpha=0.2)
+
+
+    ax['broadband_sep'].axvspan(i*(end+sep) - start_1 + timepoints_onepulse[i, 0], 
+                            i*(end+sep) - start_1 + timepoints_onepulse[i, 1], facecolor='grey', alpha=0.2)
+    ax['broadband_sep'].axvspan(i*(end+sep) - start_1 + timepoints_twopulse[i, 2], 
+                            i*(end+sep) - start_1 + timepoints_twopulse[i, 3], facecolor='grey', alpha=0.2)
+
+
+    one_pulse_mean = np.nanmean(epochs_b[event_idx_onepulse[i]], axis=1)
+
+    # plot broadband (first and second pulse)
+    if i == 0:
+
+        # plot broadband
+        ax['broadband'].plot(np.arange(end)+i*(end+sep),
+                                    data_second_pulse[start_1:start_1+end], color='black', label='Neural response')
+
+        # plot broadband (first and second pulse seperately)
+        ax['broadband_sep'].plot(np.arange(time_window)+i*(end+sep), estimate_first_pulse[start_1:start_1 +
+                                    time_window], color=broadband_color1[0], label='First response', zorder=-10)
+        ax['broadband_sep'].plot(np.arange(time_window)+i*(end+sep)+start_2-start_1,
+                                    data_second_pulse_sep[start_2:start_2+time_window], color=broadband_color2[0], label='Second response')
+
+        ax['broadband_sep'].fill_between(np.arange(time_window)+i*(end+sep), 0, 
+                                        estimate_first_pulse[start_1:start_1+time_window], color=broadband_fill1[0], edgecolor=broadband_color1[0], hatch='|||||', label=label_AUC[0])
+        ax['broadband_sep'].fill_between(np.arange(time_window)+i*(end+sep)+start_2-start_1, 0,
+                                        data_second_pulse_sep[start_2:start_2+time_window], color=broadband_fill2[0], edgecolor=broadband_color2[0], hatch='|||||', label=label_AUC[1])
+
+    else:
+
+        # plot broadband
+        ax['broadband'].plot(np.arange(end)+i*(end+sep),
+                                    data_second_pulse[start_1:start_1+end], color='black')
+
+        # plot broadband (first and second pulse seperately)
+        ax['broadband_sep'].plot(np.arange(time_window)+i*(end+sep), estimate_first_pulse[start_1:start_1 +
+                                    time_window], color=broadband_color1[0], zorder=-10)
+        ax['broadband_sep'].plot(np.arange(time_window)+i*(end+sep)+start_2-start_1,
+                                    data_second_pulse_sep[start_2:start_2+time_window], color=broadband_color2[0])
+
+        ax['broadband_sep'].fill_between(np.arange(time_window)+i*(end+sep), 0, 
+                                        estimate_first_pulse[start_1:start_1+time_window], color=broadband_fill1[0], edgecolor=broadband_color1, hatch='|||||')
+        ax['broadband_sep'].fill_between(np.arange(time_window)+i*(end+sep)+start_2-start_1, 0,
+                                        data_second_pulse_sep[start_2:start_2+time_window], color=broadband_fill2[0], edgecolor=broadband_color2, hatch='|||||')
+        
+# plot legends
+ax['broadband'].legend(ncol=2, fontsize=fontsize_legend, frameon=False, loc='upper left') # bbox_to_anchor=(0.95, 0.05))
+ax['broadband'].legend(fontsize=fontsize_legend, frameon=False, loc='upper left') # bbox_to_anchor=(0.95, 0.05))
+ax['broadband_sep'].legend(fontsize=fontsize_legend, frameon=False, ncol=4, loc='upper left') # bbox_to_anchor=(0.95, 0.05))
+
+# plot ISI recovery from RS
+ax['ISI_recovery'].axhline(
+    1, color='grey', linestyle='--', alpha=0.3, zorder=-1)  # 1 (wrt first pulse)
+
+# plot ISI recovery (points and line fit)
+ax['ISI_recovery'].scatter(
+    ISI, recovery_from_adaptation, color='k', label=label_points[0], s=30)
+
+# fit function to data
+p0 = [1, 0]
+popt, pcov = curve_fit(OF_ISI_recovery_log, ISI, recovery_from_adaptation,
+                        p0, maxfev=1000, bounds=((0, 0), (np.inf, np.inf)))
+t_temp = np.linspace(min(ISI), max(ISI), 100)
+
+y = OF_ISI_recovery_log(t_temp, *popt)
+ax['ISI_recovery'].plot(t_temp, y, color='lightgrey',
+                        lw=1.5, zorder=-10)
+
+t_temp = np.linspace(min(ISI), 4, 1000)
+y = OF_ISI_recovery_log(t_temp, *popt)
+
+# set x-ticks of ISI
+ax['broadband'].set_xticks(xtick_idx)
+ax['broadband_sep'].set_xticks(xtick_idx)
+ax['ISI_recovery'].set_xticks(ISI)
+
+ax['broadband'].set_xticklabels(label_ISI, rotation=45, fontsize=fontsize_label)
+ax['broadband_sep'].set_xticklabels(label_ISI, rotation=45, fontsize=fontsize_label)
+ax['ISI_recovery'].set_xticklabels(label_ISI, rotation=45, fontsize=fontsize_label)
 
 # save figure
 plt.tight_layout()
-plt.savefig(dir+'/mkFigure/SuppFig4.svg', format='svg')
-plt.savefig(dir+'/mkFigure/SuppFig4') 
+plt.savefig(dir+'mkFigure/SuppFig2.svg', format='svg')
+plt.savefig(dir+'mkFigure/SuppFig2', dpi=300) 
 plt.show()
-

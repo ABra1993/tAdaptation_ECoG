@@ -12,7 +12,7 @@ import seaborn as sns
 # import functions and scripts
 from utils import generate_stimulus_timecourse, import_info, import_epochs, select_events, select_events_repetitionTrials, d_prime_perImgCat, estimate_first_pulse
 from modelling_utils_paramInit import paramInit
-from modelling_utils_fitObjective import model_csDN, model_DN, OF_ISI_recovery_log
+from modelling_utils_fitObjective import model, objective, OF_ISI_recovery_log
 
 
 """
@@ -58,9 +58,14 @@ CI_low              = 50 - (0.5*CI)
 CI_high             = 50 + (0.5*CI)
 B_repetitions       = 1000
 
+# define model
+model_type = 'DN'
+    
+# scaling
+scaling = 'P'
+
 # retrieve parameters
-model = 'csDN'
-params_names, _, _, _ = paramInit(model)
+params_names, _, _, _ = paramInit(model_type, scaling)
 sample_rate = 512
 
 # labels
@@ -155,7 +160,7 @@ for i in range(n_electrodes):
     electrode_idx = int(responsive_electrodes.electrode_idx[i])
 
     # retrieve model parameters for current electrode
-    temp = pd.read_csv(dir+'modelFit/categorySelective/' + subject + '_' + electrode_name + '/param_' + model + '.txt', header=0, delimiter=' ', index_col=0)
+    temp = pd.read_csv(dir+'modelFit/categorySelective/' + subject + '_' + electrode_name + '/param_' + model_type + '_' + scaling + '.txt', header=0, delimiter=' ', index_col=0)
     temp.reset_index(inplace=True,drop=True)
     params_current = list(temp.loc[0, params_names])
 
@@ -206,7 +211,7 @@ for i in range(n_electrodes):
         # MODEL
         # for 5 remaining img classes
         if j == 0:
-            _, broadband_cat_sel_pred[i, j, :], broadband_cat_sel_nom_pred[i, j, :], broadband_cat_sel_denom_pred[i, j, :] = model_csDN(stim_twopulse[5, :], 'twopulse', 5, cat[j], sample_rate, params_current, dir, denom=True)  
+            broadband_cat_sel_pred[i, j, :], broadband_cat_sel_nom_pred[i, j, :], broadband_cat_sel_denom_pred[i, j, :] = model(model_type, scaling, stim_twopulse[5, :], sample_rate, params_current, dir, 'twopulse', 5, cat[j], denom=True)
         elif j == 1:
             data_temp = np.zeros((len(stim_cat)-1, len(t)))
             data_nom_temp = np.zeros((len(stim_cat)-1, len(t)))
@@ -214,7 +219,7 @@ for i in range(n_electrodes):
             num = 0
             for l in range(len(stim_cat)):
                 if stim_cat[l] != cat[0]:
-                    _, data_temp[num, :], data_nom_temp[num, :], data_denom_temp[num, :] =  model_csDN(stim_twopulse[5, :], 'twopulse', 5, cat[j], sample_rate, params_current, dir, denom=True)  
+                    data_temp[num, :], data_nom_temp[num, :], data_denom_temp[num, :] = model(model_type, scaling, stim_twopulse[5, :], sample_rate, params_current, dir, 'twopulse', 5, cat[j], denom=True)
                     num+=1
             broadband_cat_sel_pred[i, j, :] = np.mean(data_temp, 0)
             broadband_cat_sel_nom_pred[i, j, :] = np.mean(data_nom_temp, 0)
@@ -277,6 +282,6 @@ for i in range(len(subtrials)):
 
 # save figure
 plt.tight_layout()
-plt.savefig(dir+'mkFigure/Fig9.svg', format='svg', bbox_inches='tight')
-plt.savefig(dir+'mkFigure/Fig9', dpi=300, bbox_inches='tight')
+plt.savefig(dir+'mkFigure/Fig9_P.svg', format='svg', bbox_inches='tight')
+plt.savefig(dir+'mkFigure/Fig9_P', dpi=300, bbox_inches='tight')
 # plt.show()

@@ -741,11 +741,9 @@ def r_squared(data, fit):
 
     # compute residual sum of squares
     SS_res = np.nansum((data-fit)**2)
-    print(SS_res)
 
     # compute total sum of squares
     SS_tot = np.nansum((data-mean)**2)
-    print(SS_tot)
 
     # coefficient of determination
     try:

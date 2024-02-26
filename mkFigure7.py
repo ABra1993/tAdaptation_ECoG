@@ -12,7 +12,7 @@ import seaborn as sns
 # import functions and scripts
 from utils import generate_stimulus_timecourse, import_info, import_epochs, select_events, select_events_repetitionTrials, d_prime_perImgCat, estimate_first_pulse
 from modelling_utils_paramInit import paramInit
-from modelling_utils_fitObjective import model_csDN, model_DN, OF_ISI_recovery_log
+from modelling_utils_fitObjective import model, objective, OF_ISI_recovery_log
 
 
 """
@@ -54,13 +54,18 @@ CI_low              = 50 - (0.5*CI)
 CI_high             = 50 + (0.5*CI)
 B_repetitions       = 1000
 
+# define model
+model_type = 'DN'
+    
+# scaling
+scaling = 'S'
+
 # retrieve parameters
-model = 'csDN'
-params_names, _, _, _ = paramInit(model)
+params_names_all, _, _, _ = paramInit(model_type, scaling)
 sample_rate = 512
 
 # parameters included in plot
-param_names = ['tau1', 'tau2', 'n', 'sigma']
+param_names = ['tau', 'tau_a', 'n', 'sigma']
 param_labels = [r'$\tau_{1}$', r'$\tau_{2}$', r'$n$', r'$\sigma$']
 
 # labels
@@ -181,11 +186,12 @@ for key, value in VA_name_idx.items():
         electrode_idx = int(electrodes_visuallyResponsive.electrode_idx[value[i]])
 
         # retrieve model parameters for current electrode
-        temp = pd.read_csv(dir+'modelFit/visuallyResponsive/' + subject + '_' + electrode_name + '/param_' + model + '.txt', header=0, delimiter=' ', index_col=0)
+        temp = pd.read_csv(dir+'modelFit/visuallyResponsive/' + subject + '_' + electrode_name + '/param_' + model_type + '_' + scaling + '.txt', header=0, delimiter=' ', index_col=0)
         temp.reset_index(inplace=True,drop=True)
-        params_current = list(temp.loc[0, params_names])
+        params_current = list(temp.loc[0, params_names_all])
+        print(temp)
         for j in range(len(param_labels)):
-            param_values_current[i, j] = temp.loc[0, params_names[j]]
+            param_values_current[i, j] = temp.loc[0, param_names[j]]
 
         # print progress
         print(30*'-')
@@ -221,7 +227,9 @@ for key, value in VA_name_idx.items():
         data_nom_temp = np.zeros((len(stim_cat), len(t)))
         data_denom_temp = np.zeros((len(stim_cat), len(t)))
         for k in range(len(stim_cat)):
-            _, data_temp[k, :], data_nom_temp[k, :], data_denom_temp[k, :] = model_csDN(stim_onepulse[5, :], trials[0], 5, stim_cat[k], sample_rate, params_current, dir, denom=True)
+            # _, data_temp[k, :], data_nom_temp[k, :], data_denom_temp[k, :] = model_csDN(stim_onepulse[5, :], trials[0], 5, stim_cat[k], sample_rate, params_current, dir, denom=True)
+            data_temp[k, :], data_nom_temp[k, :], data_denom_temp[k, :] = model(model_type, scaling, stim_onepulse[5, :], sample_rate, params_current, dir, trials[0], 5, stim_cat[k], denom=True)
+        
         broadband_area_pred_current[i, :] = np.mean(data_temp, 0)
         broadband_area_nom_pred_current[i, :] = np.mean(data_nom_temp, 0)
         broadband_area_denom_pred_current[i, :] = np.mean(data_denom_temp, 0)
@@ -374,9 +382,9 @@ for key, value in VA_name_idx.items():
         electrode_idx = int(electrodes_visuallyResponsive.electrode_idx[value[i]])
 
         # retrieve model parameters for current electrode
-        temp = pd.read_csv(dir+'modelFit/visuallyResponsive/' + subject + '_' + electrode_name + '/param_' + model + '.txt', header=0, delimiter=' ', index_col=0)
+        temp = pd.read_csv(dir+'modelFit/visuallyResponsive/' + subject + '_' + electrode_name + '/param_' + model_type + '_' + scaling + '.txt', header=0, delimiter=' ', index_col=0)
         temp.reset_index(inplace=True,drop=True)
-        params_current = list(temp.loc[0, params_names])
+        params_current = list(temp.loc[0, params_names_all])
 
         # print progress
         print(30*'-')
@@ -412,7 +420,9 @@ for key, value in VA_name_idx.items():
         data_nom_temp = np.zeros((len(stim_cat), len(t)))
         data_denom_temp = np.zeros((len(stim_cat), len(t)))
         for k in range(len(stim_cat)):
-            _, data_temp[k, :], data_nom_temp[k, :], data_denom_temp[k, :] = model_csDN(stim_twopulse[5, :], trials[1], 5, stim_cat[k], sample_rate, params_current, dir, denom=True)
+            # _, data_temp[k, :], data_nom_temp[k, :], data_denom_temp[k, :] = model_csDN(stim_twopulse[5, :], trials[1], 5, stim_cat[k], sample_rate, params_current, dir, denom=True)
+            data_temp[k, :], data_nom_temp[k, :], data_denom_temp[k, :] = model(model_type, scaling, stim_twopulse[5, :], sample_rate, params_current, dir, trials[1], 5, stim_cat[k], denom=True)
+
         broadband_area_pred_current[i, :] = np.mean(data_temp, 0)
         broadband_area_nom_pred_current[i, :] = np.mean(data_nom_temp, 0)
         broadband_area_denom_pred_current[i, :] = np.mean(data_denom_temp, 0)

@@ -17,6 +17,7 @@ Description: creates a pandas DataFrame holidng the samples (72 time courses) th
 # define root directory
 file = open('setDir.txt')
 dir = file.readline()
+dir = dir[:-1]
 
 ##### SPECIFY ELECTRODE TYPE
 electrode_type = 'visuallyResponsive'

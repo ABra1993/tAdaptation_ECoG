@@ -15,7 +15,8 @@ visual areas based on anatomc (Benson et al., 2014) or probabilistic atlas (Wang
 
 # define root directory
 file = open('setDir.txt')
-dir = file.readline()
+dir = file.readline().strip('\n')
+print(dir)
 
 ##### SPECIFY ELECTRODE TYPE
 # electrode_type = 'visualllyResponsive'
@@ -161,7 +162,7 @@ if electrode_type == 'visualllyResponsive':
 elif electrode_type == 'categorySelective':
 
     # thresholds
-    threshold_d_prime = 1.0
+    threshold_d_prime = 1
     threshold_cv = 0.2
 
     # predefined variables
@@ -270,6 +271,47 @@ elif electrode_type == 'categorySelective':
 
                     # add coordinates
                     df.loc[count, ['x', 'y', 'z']] = coordinates.loc[i, ['x', 'y', 'z']]
+
+                    # specify which area
+                    if (electrodes.loc[i, 'wang15_mplbl'] == 'V1v') | \
+                        (electrodes.loc[i, 'wang15_mplbl'] == 'V1d') | \
+                        (electrodes.loc[i, 'wang15_mplbl'] == 'V2v') | \
+                        (electrodes.loc[i, 'wang15_mplbl'] == 'V2d') | \
+                        (electrodes.loc[i, 'wang15_mplbl'] == 'V3v') | \
+                        (electrodes.loc[i, 'wang15_mplbl'] == 'V3d') | \
+                        (electrodes.loc[i, 'benson14_varea'] == 'V1') | \
+                        (electrodes.loc[i, 'benson14_varea'] == 'V2') | \
+                        (electrodes.loc[i, 'benson14_varea'] == 'V3'):
+
+                        df.loc[count, 'varea'] = 'V1-V3'
+
+                    elif (electrodes.loc[i, 'wang15_mplbl'] == 'hV4') | \
+                        (electrodes.loc[i, 'wang15_mplbl'] == 'VO1') | \
+                        (electrodes.loc[i, 'wang15_mplbl'] == 'VO2') | \
+                        (electrodes.loc[i, 'benson14_varea'] == 'hV4') | \
+                        (electrodes.loc[i, 'benson14_varea'] == 'VO1') | \
+                        (electrodes.loc[i, 'benson14_varea'] == 'VO2'):
+
+                        df.loc[count, 'varea'] = 'VOTC'
+                        
+                    elif (electrodes.loc[i, 'wang15_mplbl'] == 'V3a') | \
+                        (electrodes.loc[i, 'wang15_mplbl'] == 'V3b') | \
+                        (electrodes.loc[i, 'wang15_mplbl'] == 'LO1') | \
+                        (electrodes.loc[i, 'wang15_mplbl'] == 'LO2') | \
+                        (electrodes.loc[i, 'wang15_mplbl'] == 'TO1') | \
+                        (electrodes.loc[i, 'wang15_mplbl'] == 'TO2') | \
+                        (electrodes.loc[i, 'benson14_varea'] == 'V3a') | \
+                        (electrodes.loc[i, 'benson14_varea'] == 'V3b') | \
+                        (electrodes.loc[i, 'benson14_varea'] == 'LO1') | \
+                        (electrodes.loc[i, 'benson14_varea'] == 'LO2') | \
+                        (electrodes.loc[i, 'benson14_varea'] == 'TO1') | \
+                        (electrodes.loc[i, 'benson14_varea'] == 'TO2'):
+
+                        df.loc[count, 'varea'] = 'LOTC'
+
+                    else:
+
+                        df.loc[count, 'varea'] = 'none'
 
                     # increment count
                     count+=1

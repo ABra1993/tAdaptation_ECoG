@@ -13,7 +13,7 @@ from utils import generate_stimulus_timecourse, import_info, import_epochs, sele
 from modelling_utils_paramInit import paramInit
 # from models.Models_csDN import Models_csDN
 # from models.Models_DN import Models_DN
-from modelling_utils_fitObjective import model_csDN, model_DN
+from modelling_utils_fitObjective import objective, model
 
 """
 
@@ -32,9 +32,9 @@ dir = file.readline().strip('\n')
 print(dir)
 
 # specifiy the trial types
-# img_type = 'all'
+img_type = 'all'
 # img_type = 'preferred'
-img_type = 'nonpreferred'
+# img_type = 'nonpreferred'
 
 ##############################################################################################################
 ##############################################################################################################
@@ -65,11 +65,13 @@ for i in range(len(tempCond)):
     stim_onepulse[i, :] = generate_stimulus_timecourse('onepulse', i, dir)
 
 # define model
-# model = 'DN'
-model = 'csDN'
+model_type = 'DN'
+    
+# scaling
+scaling = 'S'
 
 # retrieve parameters
-params_names, _, _, _ = paramInit(model)
+params_names, _, _, _ = paramInit(model_type, scaling)
 sample_rate = 512
 
 # determine confidence interval for plotting
@@ -98,6 +100,17 @@ for i in range(n_electrodes):
 VA_name_idx = {}
 VA_name_idx = {k: VA_name_idx_temp[k] for k in VA}
 print(VA_name_idx, '\n')
+
+# identify subjects
+subjects = electrodes_visuallyResponsive.subject.unique()
+print(subjects)
+
+# report number of subjects
+for sub in subjects:
+    print('\n', sub)
+    for va in VA:
+        idx = electrodes_visuallyResponsive[(electrodes_visuallyResponsive.varea == va) & (electrodes_visuallyResponsive.subject == sub)].index
+        print(va, ': ', len(idx))
 
 ############################################################################
 ############################################################## DATA ANALYSIS
@@ -164,7 +177,7 @@ for key, value in VA_name_idx.items():
         electrode_idx = int(electrodes_visuallyResponsive.electrode_idx[value[i]])
 
         # retrieve model parameters for current electrode
-        temp = pd.read_csv(dir+'modelFit/visuallyResponsive/' + subject + '_' + electrode_name + '/param_' + model + '.txt', header=0, delimiter=' ', index_col=0)
+        temp = pd.read_csv(dir+'modelFit/visuallyResponsive/' + subject + '_' + electrode_name + '/param_' + model_type + '_' + scaling + '.txt', header=0, delimiter=' ', index_col=0)
         temp.reset_index(inplace=True,drop=True)
         params_current = list(temp.loc[0, params_names])
 
@@ -220,25 +233,26 @@ for key, value in VA_name_idx.items():
             broadband_current[i, j, :] = np.nanmean(epochs_b[event_idx[j]], axis=1)
 
             # predict data with model
-            if model == 'csDN':
+            if scaling != 'none':
                 if preference == 0:     # all
                     temp = np.zeros((len(stim_cat), len(t)))
                     for l in range(len(stim_cat)):
-                        _, temp[l, :] = model_csDN(stim_onepulse[j, :], 'onepulse', j, stim_cat[l], sample_rate, params_current, dir)
+                        temp[l, :] = model(model_type, scaling, stim_onepulse[j, :], sample_rate, params_current, dir, 'onepulse', j, stim_cat[l], t=t)
                     broadband_pred_current[i, j, :] = np.mean(temp, 0)
                 elif preference == 1:   # preferred
-                    _, broadband_pred_current[i, j, :] = model_csDN(stim_onepulse[j, :], 'onepulse', j, cat[0], sample_rate, params_current, dir)
+                    broadband_pred_current[i, j, :] = model(model_type, scaling, stim_onepulse[j, :], sample_rate, params_current, dir, 'onepulse', j, cat[0], t=t)
                 elif preference == 2:   # nonpreferred
                     temp = np.zeros((len(stim_cat)-1, len(t)))
                     num = 0
                     for l in range(len(stim_cat)):
                         if l != preferred_cat_index:
-                            _, temp[num, :] = model_csDN(stim_onepulse[j, :], 'onepulse', j, stim_cat[l], sample_rate, params_current, dir)
+                            temp[num, :] = model(model_type, scaling, stim_onepulse[j, :], sample_rate, params_current, dir, 'onepulse', j, stim_cat[l], t=t)
                             num+=1
                     broadband_pred_current[i, j, :] = np.mean(temp, 0)
-            elif model == 'DN':
-                broadband_pred_current[i, j, :] = model_DN(stim_onepulse[j, :], sample_rate, params_current)
-        
+            else:
+                # broadband_pred_current[i, j, :] = model_DN(stim_onepulse[j, :], sample_rate, params_current)
+                broadband_pred_current[i, j, :] = model(model_type, scaling, stim_onepulse[j, :], sample_rate, params_current, dir)
+                
     # perform bootstrap over broadband timecourse
     for i in range(B_repetitions):
 
@@ -405,6 +419,8 @@ t_twohundred    = np.argwhere(t > 0.5)[0][0]
 
 x_label_single = ['0', '500']
 
+lw = 1
+
 xtick_idx = []
 for i in range(len(tempCond)):
 
@@ -415,15 +431,15 @@ for i in range(len(tempCond)):
     end_stim = timepoints_onepulse[i, 1]
     for j in range(len(VA)):
         if (j == 0) & (i == 0):
-            ax['broadband'].axvspan(i*(end+sep) - start + timepoints_onepulse[i, 0], i*(
-                end+sep) + end_stim, facecolor='grey', alpha=0.2, label='stimulus')
-            ax['broadband_model'].axvspan(i*(end+sep) - start + timepoints_onepulse[i, 0], i*(
-                end+sep) + end_stim, facecolor='grey', alpha=0.2)
+            ax['broadband'].axvspan(i*(end+sep) + timepoints_onepulse[i, 0], i*(
+                end+sep) + timepoints_onepulse[i, 1], facecolor='grey', alpha=0.2, label='stimulus')
+            ax['broadband_model'].axvspan(i*(end+sep) + timepoints_onepulse[i, 0], i*(
+                end+sep) + timepoints_onepulse[i, 1], facecolor='grey', alpha=0.2)
         elif (j == 0):
-            ax['broadband'].axvspan(i*(end+sep) - start + timepoints_onepulse[i, 0], i*(
-                end+sep) + end_stim, facecolor='grey', alpha=0.2)
-            ax['broadband_model'].axvspan(i*(end+sep) - start + timepoints_onepulse[i, 0], i*(
-                end+sep) + end_stim, facecolor='grey', alpha=0.2)
+            ax['broadband'].axvspan(i*(end+sep) + timepoints_onepulse[i, 0], i*(
+                end+sep) + timepoints_onepulse[i, 1], facecolor='grey', alpha=0.2)
+            ax['broadband_model'].axvspan(i*(end+sep) + timepoints_onepulse[i, 0], i*(
+                end+sep) + timepoints_onepulse[i, 1], facecolor='grey', alpha=0.2)
 
         # plot mean values (panel A)
         data_temp = gaussian_filter1d(np.mean(broadband_bootstrap[j][:, i, :], axis=0), 10)
@@ -432,11 +448,11 @@ for i in range(len(tempCond)):
         # model_std = np.std(broadband_pred_bootstrap[j][:, i, :], axis=0)/math.sqrt(VA_n[j])
 
         if i == 0:
-            ax['broadband'].plot(np.arange(end - start)+i*(end+sep), data_temp[start:end], color=np.array(colors_VA[j])/255, label=VA[j], lw=0.5)
-            ax['broadband_model'].plot(np.arange(end - start)+i*(end+sep), model_temp[start:end], color=np.array(colors_VA[j])/255, lw=0.5)
+            ax['broadband'].plot(np.arange(end - start)+i*(end+sep) + start, data_temp[start:end], color=np.array(colors_VA[j])/255, label=VA[j], lw=lw)
+            ax['broadband_model'].plot(np.arange(end - start)+i*(end+sep) + start, model_temp[start:end], color=np.array(colors_VA[j])/255, lw=lw)
         else:
-            ax['broadband'].plot(np.arange(end - start)+i*(end+sep), data_temp[start:end], color=np.array(colors_VA[j])/255, lw=0.5)
-            ax['broadband_model'].plot(np.arange(end - start)+i*(end+sep), model_temp[start:end], color=np.array(colors_VA[j])/255, lw=0.5)
+            ax['broadband'].plot(np.arange(end - start)+i*(end+sep) + start, data_temp[start:end], color=np.array(colors_VA[j])/255, lw=lw)
+            ax['broadband_model'].plot(np.arange(end - start)+i*(end+sep) + start, model_temp[start:end], color=np.array(colors_VA[j])/255, lw=lw)
 
         # plot variance (68% confidence interval)
         data_std_bootstrap = np.zeros((len(data_temp[start:end]), 2))
@@ -444,8 +460,8 @@ for i in range(len(tempCond)):
         for t in range(len(data_temp[start:end])):
             data_std_bootstrap[t, :] = np.nanpercentile(broadband_bootstrap[j][:, i, start+t], [CI_low, CI_high])
             model_std_bootstrap[t, :] = np.nanpercentile(broadband_pred_bootstrap[j][:, i, start+t], [CI_low, CI_high])
-        ax['broadband'].fill_between(np.arange(end - start)+i*(end+sep), gaussian_filter1d(data_std_bootstrap[:, 0], 10), gaussian_filter1d(data_std_bootstrap[:, 1], 10), color=np.array(colors_VA[j])/255, edgecolor=None, alpha=0.3)
-        ax['broadband_model'].fill_between(np.arange(end - start)+i*(end+sep), gaussian_filter1d(model_std_bootstrap[:, 0], 10), gaussian_filter1d(model_std_bootstrap[:, 1], 10), color=np.array(colors_VA[j])/255, edgecolor=None, alpha=0.3)
+        ax['broadband'].fill_between(np.arange(end - start)+i*(end+sep) + start, gaussian_filter1d(data_std_bootstrap[:, 0], 10), gaussian_filter1d(data_std_bootstrap[:, 1], 10), color=np.array(colors_VA[j])/255, edgecolor=None, alpha=0.3)
+        ax['broadband_model'].fill_between(np.arange(end - start)+i*(end+sep) + start, gaussian_filter1d(model_std_bootstrap[:, 0], 10), gaussian_filter1d(model_std_bootstrap[:, 1], 10), color=np.array(colors_VA[j])/255, edgecolor=None, alpha=0.3)
 
 # plot time-to-peak (panel B) - neural data
 error_min = ttp_CI[:, 0]
@@ -720,8 +736,10 @@ for i in range(2):
 
 # save figure
 plt.tight_layout()
-plt.savefig(dir+'mkFigure/Fig4_' + img_type + '.svg', format='svg', bbox_inches='tight')
-plt.savefig(dir+'mkFigure/Fig4_' + img_type, dpi=300, bbox_inches='tight')
+plt.savefig(dir+'mkFigure/Fig4_' + img_type + '_TTC19.svg', format='svg', bbox_inches='tight')
+plt.savefig(dir+'mkFigure/Fig4_' + img_type + '_TTC19', dpi=300, bbox_inches='tight')
+# plt.savefig(dir+'mkFigure/Fig4_' + img_type + '.svg', format='svg', bbox_inches='tight')
+# plt.savefig(dir+'mkFigure/Fig4_' + img_type, dpi=300, bbox_inches='tight')
 # plt.show()
 
 

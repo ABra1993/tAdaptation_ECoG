@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import math
 import seaborn as sns
+from sklearn.utils import resample
 
 from modelling_utils_paramInit import paramInit
 
@@ -20,8 +21,8 @@ Author: A. Brands
 
 # define root directory
 file = open('setDir.txt')
-dir = file.readline().strip('\n')
-print(dir)
+dir = file.readline()
+dir = dir[:-1]
 
 ##############################################################################################################
 ##############################################################################################################
@@ -31,8 +32,16 @@ print(dir)
 # visual areas (labels)
 VA = ['V1-V3', 'VOTC', 'LOTC']
 
+# determine confidence interval for plotting
+CI                  = 68
+CI_low              = 50 - (0.5*CI)
+CI_high             = 50 + (0.5*CI)
+B_repetitions       = 1000
+
 # import image classes
 stim_cat = np.loadtxt(dir+'variables/cond_stim.txt', dtype=str)
+
+sf_labels = ['sf_bodies', 'sf_buildings', 'sf_faces', 'sf_objects', 'sf_scenes', 'sf_scrambled']
 
 # electrode coordinates
 electrodes_visuallyResponsive = pd.read_csv(dir+'subject_data/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
@@ -51,21 +60,28 @@ VA_name_idx = {k: VA_name_idx_temp[k] for k in VA}
 print(VA_name_idx, '\n')
 
 # computational models
-models = ['DN', 'csDN']
+models              = ['DN']
+models_labels       = ['DN']
+
+# scaling
+scaling             = ['none', 'S']
+scaling_lbl         = ['omitted', 'included']
 
 # iterate over electrode and retrieve cross-validated performance for DN models and cbDN (fitted for P and NP trials)
-r2_values_mean      = np.zeros((len(VA), len(models)))
-r2_values_variance  = np.zeros((len(VA), len(models)))
+r2_values_medians       = np.zeros((B_repetitions, len(VA), len(models), len(scaling)))
+
+r2_values_avg           = np.zeros((len(VA), len(models), len(scaling)))
+r2_values_variance      = np.zeros((2, len(VA), len(models), len(scaling)))
 
 # iterate over electrode and retrieve cross-validated performance for csDN (fitted for all image classes seperately)
 count_VA = 0
-for _, value in VA_name_idx.items():
+for key, value in VA_name_idx.items():
 
     # determine number of electrodes
     n_electrodes = len(value)
 
     # initiate dataframes
-    r2_values_current = np.zeros((n_electrodes, len(models)))
+    r2_values_current = np.zeros((n_electrodes, len(models), len(scaling)))
 
     for i in range(n_electrodes):
     # for i in range(2):
@@ -75,21 +91,42 @@ for _, value in VA_name_idx.items():
         electrode_name = electrodes_visuallyResponsive.electrode[value[i]]
 
         # cbdn_fine model (overall r2)
-        for idx, model in enumerate(models):
-            temp = pd.read_csv(dir+'modelFit/visuallyResponsive/' + subject + '_' + electrode_name + '/param_' + model + '.txt', header=0, delimiter=' ', index_col=0)
-            r2_values_current[i, idx] = temp.loc[:, 'r2']
+        for idxM, model in enumerate(models):
+
+            for idxS, scal in enumerate(scaling):
+                temp = pd.read_csv(dir+'modelFit/visuallyResponsive/' + subject + '_' + electrode_name + '/param_' + model + '_' + scal + '.txt', header=0, delimiter=' ', index_col=0)
+                r2_values_current[i, idxM, idxS] = temp.loc[:, 'r2']
 
     # average values
-    for i in range(len(models)):
-        r2_values_mean[count_VA, i] = np.mean(r2_values_current[:, i])
-        r2_values_variance[count_VA, i] = np.std(r2_values_current[:, i])/math.sqrt(n_electrodes)
+    for m in range(len(models)):
+        for s in range(len(scaling)):
+            
+            # bootstrapping procedure
+            for B in range(B_repetitions):
+
+                # draw random sample
+                idx_temp = np.arange(n_electrodes)
+                n_samples = len(idx_temp)
+                boot = resample(idx_temp, replace=True, n_samples=n_samples)
+
+                # retrieve data
+                data_boot = np.zeros(n_samples)
+                for idxB, b in enumerate(boot):
+                    data_boot[idxB] = r2_values_current[b, m, s]
+
+                # compute median for current bootstrap sample
+                r2_values_medians[B, count_VA, m, s] = np.median(data_boot)
+
+            # compute CI
+            # print(r2_values_medians[:, count_VA, i, s])
+            r2_values_avg[count_VA, m, s] = np.median(r2_values_medians[:, count_VA, m, s])
+            r2_values_variance[:, count_VA, m, s] = np.nanpercentile(r2_values_medians[:, count_VA, m, s], [CI_low, CI_high])
 
     # increment count
-    count_VA = count_VA + 1 
-
+    count_VA = count_VA + 1
 
 # plot cross validation
-fig = plt.figure()
+fig = plt.figure(figsize=(7, 5))
 ax = plt.gca()
 
 # seperate axes
@@ -99,24 +136,30 @@ sns.despine(offset=10)
 barWidth = 0.2
 
 # fontsizes
-fontsize_label  = 18
-fontsize_tick   = 24
+fontsize_label  = 20
+fontsize_tick   = 15
 fontsize_legend = 15
 
 # # set height of bar
-model1 = r2_values_mean[:, 0]
-model2 = r2_values_mean[:, 1]
+model1 = r2_values_avg[:, 0, 0]
+model2 = r2_values_avg[:, 0, 1]
 
 # Set position of bar on X axis
 br1 = np.arange(len(model1))
 br2 = [x + barWidth for x in br1]
 br = [br1, br2]
+print(br)
 
 # visualize mean
-ax.bar(br1, model1, color='white', width = barWidth,
-        edgecolor = 'black', label = models[0], yerr=r2_values_variance[:, 0])
+ax.bar(br1, model1, color='pink', width = barWidth,
+        edgecolor = 'white', label = scaling_lbl[0])
 ax.bar(br2, model2, color = np.array([212, 0, 0])/255 , width = barWidth,
-        edgecolor = np.array([212, 0, 0])/255, label = models[1], yerr=r2_values_variance[:, 0])
+        edgecolor = 'white', label = scaling_lbl[1])
+
+# visualize spread
+for iV in range(len(VA)):
+    for iS in range(len(scaling_lbl)):
+        ax.plot([br[iS][iV], br[iS][iV]], [r2_values_variance[0, iV, 0, iS], r2_values_variance[1, iV, 0, iS]], color='black')
 
 # axes
 ax.set_ylabel(r'Cross-validated $R^{2}$', fontsize=fontsize_label)
@@ -127,10 +170,13 @@ ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
 # ax.set_ylim(-0.15, 0.65)
-plt.legend(fontsize=fontsize_legend, frameon=False, ncol=2)
+plt.legend(fontsize=fontsize_legend, frameon=False, loc='upper right', ncol=2, title='Category-dependent scaling', title_fontsize=fontsize_legend)
 
 # save figure
+plt.tight_layout()
 plt.savefig(dir+'/mkFigure/Fig3.svg', format='svg')
 plt.savefig(dir+'/mkFigure/Fig3') 
 # plt.show()
+
+
 

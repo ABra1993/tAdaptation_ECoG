@@ -1,7 +1,13 @@
-subject_data
+__pycache__
+dataIris
 mkFigure/modelFit
+mkFigure/other
+mkFigure/V1-V3
 modelFit
 models/__pycache__
-__pycache__
-setDir.txt
+models/old
+scripts_other
+subject_data
 setDir_FreeSurfer.txt
+setDir.txt
+test.txt

@@ -16,10 +16,12 @@ class Models_DN:
 
     params
     -----------------------
-    stim : array dim(1, T)
+    stim : array dim(T)
         stimulus time course
     sample_rate : int
         frequency with which the timepoints are measured
+    adapt : float
+        controls adaptation of stimuli
     tau : float
         time to peak for positive IRF (seconds)
     weight : float
@@ -36,15 +38,22 @@ class Models_DN:
 
     """
 
-    def __init__(self, stim, sample_rate, tau, shift, scale, n, sigma, tau_a):
+    def __init__(self, stim, sample_rate, shift, scale, tau, n, sigma, tau_a, sf_bodies=None, sf_buildings=None, sf_faces=None, sf_objects=None, sf_scenes=None, sf_scrambled=None):
 
         # assign class variables
-        self.tau = tau
         self.shift = shift
         self.scale = scale
+        self.tau = tau
         self.n = n
         self.sigma = sigma
         self.tau_a = tau_a
+
+        self.sf = [sf_bodies, sf_buildings, sf_faces, sf_objects, sf_scenes, sf_scrambled]
+        # self.sf = [sf_bodies, sf_buildings, sf_faces, sf_objects, sf_scenes]
+
+        # image classes
+        self.stim = ['BODIES', 'BUILDINGS', 'FACES', 'OBJECTS', 'SCENES', 'SCRAMBLED']
+        # self.stim = ['BODIES', 'BUILDINGS', 'FACES', 'OBJECTS', 'SCENES']
 
         # iniate temporal variables
         self.numtimepts = len(stim)
@@ -53,11 +62,71 @@ class Models_DN:
         # compute timepoints
         self.t = np.arange(0, self.numtimepts)/self.srate
 
-        # compute the impulse response function (used in the nominator, convolution of the stimulus)
+        # compute the impulse response function (used in the nominator, convolution of the stimulus) were m = 2
         self.irf = self.gammaPDF(self.t, self.tau, 2)
-
+        
         # create exponential decay filter (for the normalization, convolution of the linear response)
         self.norm_irf = self.exponential_decay(self.t, self.tau_a)
+
+    def scaling_stimulus(self, input, trial, cond, cat, root):
+        """ Adapt stimulus height.
+
+        params
+        -----------------------
+        input : float
+            array containing values of input timecourse
+        trial : string
+            indicates type of trial (e.g. 'onepulse')
+        cond : int
+            ISI condition
+        cat : str
+            image category
+        dir : str
+            root directory
+
+        returns
+        -----------------------
+        stim : float
+            adapted response
+
+        """
+
+        # create copy of input
+        stim = np.zeros(len(input))
+
+        # determine which scaling factor to use
+        cat_idx = self.stim.index(cat)
+        sf = self.sf[cat_idx]
+
+        # scale stimulus timecourse
+        if 'onepulse' in trial:
+
+            # import stimulus timepoints
+            timepoints_onepulse = np.loadtxt(root+'variables/timepoints_onepulse.txt', dtype=int)
+
+            # define start and end of stimulus (expressed as timepts)
+            start   = timepoints_onepulse[cond, 0]
+            end     = timepoints_onepulse[cond, 1]
+
+            # scale timecourse
+            stim[start:end] = input[start:end] * sf
+
+        elif 'twopulse' in trial:
+
+            # import stimulus timepoints
+            timepoints_twopulse = np.loadtxt(root+'variables/timepoints_twopulse.txt', dtype=int)
+
+            # define start and end of stimulus (expressed as timepts)
+            start1  = timepoints_twopulse[cond, 0]
+            end1    = timepoints_twopulse[cond, 1]
+            start2  = timepoints_twopulse[cond, 2]
+            end2    = timepoints_twopulse[cond, 3]
+
+            # scale timecourse
+            stim[start1:end1] = input[start1:end1] * sf
+            stim[start2:end2] = input[start2:end2] * sf
+
+        return stim
 
     def response_shift(self, input):
         """ Shifts response in time in the case that there is a delay betwween stimulus onset and response.
@@ -75,7 +144,7 @@ class Models_DN:
         """
 
         # add shift to the stimulus
-        # sft = np.round(self.shift/(1/self.srate))
+        # sft = self.shift/(1/self.srate)
         stimtmp = np.pad(input, (int(self.shift), 0), 'constant', constant_values=0)
         stim = stimtmp[0: self.numtimepts]
 
@@ -140,39 +209,39 @@ class Models_DN:
 
         return exp
 
-    def norm(self, input, linrsp):
-        """ Normalization of the input.
+    # def norm(self, input, linrsp):
+    #     """ Normalization of the input.
 
-        params
-        -----------------------
-        input : float
-            array containing values of input timecourse
-        linrsp : float
-            array containing values of linear response
+    #     params
+    #     -----------------------
+    #     input : float
+    #         array containing values of input timecourse
+    #     linrsp : float
+    #         array containing values of linear response
 
-        returns
-        -----------------------
-        rsp : float
-            adapted response
+    #     returns
+    #     -----------------------
+    #     rsp : float
+    #         adapted response
 
-        """
+    #     """
 
-        # compute the normalized response
-        demrsp = self.sigma**self.n + abs(linrsp)**self.n                       # semi-saturate + exponentiate
-        normrsp = input/demrsp                                                  # divide
+    #     # compute the normalized response
+    #     demrsp = self.sigma**self.n + abs(linrsp)**self.n                       # semi-saturate + exponentiate
+    #     normrsp = input/demrsp                                                  # divide
 
-        # scale with gain
-        rsp = self.scale * normrsp
+    #     # scale with gain
+    #     rsp = self.scale * normrsp
 
-        return rsp
+    #     return rsp
 
-    def norm_delay(self, input, linrsp, denom=False):
+    def norm_delay(self, input, linrsp):
         """ Introduces delay in input
 
         params
         -----------------------
         input : float
-            array containing values of input timecourse
+            array containing values of linear + rectf + exp
         linrsp : float
             array containing values of linear response
 
@@ -184,7 +253,7 @@ class Models_DN:
         """
 
         # compute the normalized delayed response
-        poolrsp = np.convolve(linrsp, self.norm_irf, 'full')
+        poolrsp = np.convolve(linrsp, self.norm_irf, 'full')                    # delay
         poolrsp = poolrsp[0:self.numtimepts]
         demrsp = self.sigma**self.n + abs(poolrsp)**self.n                      # semi-saturate + exponentiate
         normrsp = input/demrsp                                                  # divide
@@ -192,10 +261,33 @@ class Models_DN:
         # scale with gain
         rsp = self.scale * normrsp
 
-        if denom:
-            return rsp, demrsp
-        else:
-            return rsp
+        return rsp, demrsp
+
+    def scaling_prediction(self, input, cat):
+        """ Adapt stimulus height.
+
+        params
+        -----------------------
+        input : float
+            array containing values of input timecourse
+        cat : str
+            image category
+
+        returns
+        -----------------------
+        stim : float
+            adapted response
+
+        """
+
+        # determine which scaling factor to use
+        cat_idx = self.stim.index(cat)
+        sf = self.sf[cat_idx]
+
+        # scale with gain
+        rsp = sf * input
+
+        return rsp
         
     def gammaPDF(self, t, tau, n):
         """ Returns values of a gamma function for a given timeseries.
