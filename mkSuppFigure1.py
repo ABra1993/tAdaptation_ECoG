@@ -222,8 +222,8 @@ ax[0].legend(fontsize=fontsize_legend, frameon=False, loc='upper left')
 
 # save figure
 plt.tight_layout()
-plt.savefig(dir+'/mkFigure/SuppFigure1.svg', format='svg')
-plt.savefig(dir+'/mkFigure/SuppFigure1') 
+plt.savefig(dir+'/mkFigure/SuppFig1.svg', format='svg')
+plt.savefig(dir+'/mkFigure/SuppFig1') 
 # plt.show()
 
 # ############################################################### STATISTICS avg
