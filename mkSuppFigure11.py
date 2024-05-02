@@ -80,7 +80,7 @@ lw = 2
 _, events, channels, _ = import_info(subject, dir)
 
 # import excluded trials
-excluded_epochs = pd.read_csv(dir+'subject_data/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
+excluded_epochs = pd.read_csv(dir+'data_subjects/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
 
 # extract broadband data
 electrode_idx = select_electrodes(channels, electrode_name)
@@ -142,5 +142,5 @@ for iS in range(len(scaling)):
 plt.tight_layout()
 plt.savefig(dir+'/mkFigure/SuppFig9.svg', format='svg')
 plt.savefig(dir+'/mkFigure/SuppFig9') 
-plt.show()
+# plt.show()
 

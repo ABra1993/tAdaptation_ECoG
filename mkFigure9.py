@@ -129,7 +129,7 @@ subtrials = ['preferred', 'non-preferred']
 color_cat = ['dodgerblue', 'crimson']
 
 # import info responsive electrodes showing category-selectivity
-responsive_electrodes = pd.read_csv(dir+'subject_data/electrodes_categorySelective_' + str(threshold_d_prime).replace('.', '-') + '.txt', header=0, index_col=0, delimiter=' ')
+responsive_electrodes = pd.read_csv(dir+'data_subjects/electrodes_categorySelective_' + str(threshold_d_prime).replace('.', '-') + '.txt', header=0, index_col=0, delimiter=' ')
 responsive_electrodes = responsive_electrodes[responsive_electrodes.preferred_cat != 'SCRAMBLED']
 responsive_electrodes.reset_index(drop=True, inplace=True)
 n_electrodes = len(responsive_electrodes)
@@ -176,7 +176,7 @@ for i in range(n_electrodes):
         _, events, channels, _ = import_info(subject, dir)
 
         # import excluded trials
-        excluded_epochs = pd.read_csv(dir+'subject_data/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
+        excluded_epochs = pd.read_csv(dir+'data_subjects/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
 
     # extract data
     epochs_b = import_epochs(subject, electrode_idx, dir)

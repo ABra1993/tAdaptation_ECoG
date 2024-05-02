@@ -36,9 +36,9 @@ t_index     = np.arange(len(t)).astype(str).tolist()
 
 # import electrodes
 if electrode_type == 'visuallyResponsive':
-    electrodes = pd.read_csv(dir+'subject_data/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
+    electrodes = pd.read_csv(dir+'data_subjects/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
 elif electrode_type == 'categorySelective':
-     electrodes = pd.read_csv(dir+'subject_data/electrodes_categorySelective_0-5.txt', header=0, index_col=0, delimiter=' ')
+     electrodes = pd.read_csv(dir+'data_subjects/electrodes_categorySelective_0-5.txt', header=0, index_col=0, delimiter=' ')
 
 # # model fit for a single electrode
 # electrodes = electrodes[(electrodes.subject == 'sub-p14') & (electrodes.electrode == 'LO01')]

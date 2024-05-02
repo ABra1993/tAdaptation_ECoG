@@ -33,8 +33,8 @@ print(dir)
 
 # import info responsive electrodes showing category-selectivity
 threshold_d_prime = 0.5
-# threshold_d_prime = 0.75
-# threshold_d_prime = 1.0
+threshold_d_prime = 0.75
+threshold_d_prime = 1.0
 
 ##############################################################################################################
 ##############################################################################################################
@@ -64,7 +64,7 @@ CI_high             = 50 + (0.5*CI)
 B_repetitions       = 1000
 
 # import info responsive electrodes showing category-selectivity
-responsive_electrodes = pd.read_csv(dir+'subject_data/electrodes_categorySelective_' + str(threshold_d_prime).replace('.', '-') + '.txt', header=0, index_col=0, delimiter=' ')
+responsive_electrodes = pd.read_csv(dir+'data_subjects/electrodes_categorySelective_' + str(threshold_d_prime).replace('.', '-') + '.txt', header=0, index_col=0, delimiter=' ')
 responsive_electrodes = responsive_electrodes[responsive_electrodes.preferred_cat != 'SCRAMBLED']
 responsive_electrodes.reset_index(drop=True, inplace=True)
 n_electrodes = len(responsive_electrodes)
@@ -179,7 +179,7 @@ for i in range(n_electrodes):
         _, events, channels, _ = import_info(subject, dir)
 
         # select excluded epochs
-        excluded_epochs = pd.read_csv(dir+'subject_data/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
+        excluded_epochs = pd.read_csv(dir+'data_subjects/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
 
     # extract data
     epochs_b = import_epochs(subject, electrode_idx, dir)
@@ -355,6 +355,27 @@ for j in range(len(subtrials)):
 
     print(subtrials[j])
     print(np.round(np.mean(z_score[:, j]), 2))
+
+
+# save data
+if threshold_d_prime == 0.5:
+    fig = 'Fig8'
+elif threshold_d_prime == 0.75:
+    fig = 'SFig7'
+elif threshold_d_prime == 1:
+    fig = 'SFig8'
+
+np.save(dir + 'data_figures/' + fig + '/adaptation_avg', adaptation_avg)
+np.save(dir + 'data_figures/' + fig + '/adaptation_CI', adaptation_CI)
+
+np.save(dir + 'data_figures/' + fig + '/adaptation_avg_model', adaptation_pred_avg)
+np.save(dir + 'data_figures/' + fig + '/adaptation_CI_model', adaptation_pred_CI)
+
+np.save(dir + 'data_figures/' + fig + '/intercept_avg', intercept_avg)
+np.save(dir + 'data_figures/' + fig + '/intercept_CI', intercept_CI)
+
+np.save(dir + 'data_figures/' + fig + '/intercept_avg_model', intercept_pred_avg)
+np.save(dir + 'data_figures/' + fig + '/intercept_CI_model', intercept_pred_CI)
 
 ############################################################################
 ################################################################## VISUALIZE

@@ -33,8 +33,8 @@ print(dir)
 
 # specifiy the trial types
 img_type = 'all'
-# img_type = 'preferred'
-# img_type = 'nonpreferred'
+img_type = 'preferred'
+img_type = 'nonpreferred'
 
 ##############################################################################################################
 ##############################################################################################################
@@ -93,7 +93,7 @@ VA_labels = ['V1-V3', 'VOTC', 'LOTC']
 colors_VA = [[233, 167, 0], [48, 64, 141], [187, 38, 102]]
 
 # electrode coordinates
-electrodes_visuallyResponsive = pd.read_csv(dir+'subject_data/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
+electrodes_visuallyResponsive = pd.read_csv(dir+'data_subjects/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
 n_electrodes = len(electrodes_visuallyResponsive)
 
 # extract electrode indices per visual area (i.e. V1-V3, LOTC, VOTC)
@@ -237,7 +237,7 @@ for key, value in VA_name_idx.items():
             _, events, channels, _ = import_info(subject, dir)
 
             # import excluded trials
-            excluded_epochs = pd.read_csv(dir+'subject_data/' + subject + '/excluded_epochs.txt', sep=' ', header=0, dtype=int)
+            excluded_epochs = pd.read_csv(dir+'data_subjects/' + subject + '/excluded_epochs.txt', sep=' ', header=0, dtype=int)
 
         # extract data
         epochs_b = import_epochs(subject, electrode_idx, dir)
@@ -470,6 +470,25 @@ for key, value in VA_name_idx.items():
     # increment count
     count_VA+=1
 
+# save data
+if img_type == 'all':
+    fig = 'Fig6'
+elif img_type == 'preferred':
+    fig = 'SFig4'
+elif img_type == 'nonpreferred':
+    fig = 'SFig5'
+
+np.save(dir + 'data_figures/' + fig + '/adaptation_avg', adaptation_avg)
+np.save(dir + 'data_figures/' + fig + '/adaptation_CI', adaptation_CI)
+
+np.save(dir + 'data_figures/' + fig + '/adaptation_avg_model', adaptation_pred_avg)
+np.save(dir + 'data_figures/' + fig + '/adaptation_CI_model', adaptation_pred_CI)
+
+np.save(dir + 'data_figures/' + fig + '/intercept_avg', intercept_avg)
+np.save(dir + 'data_figures/' + fig + '/intercept_CI', intercept_CI)
+
+np.save(dir + 'data_figures/' + fig + '/intercept_avg_model', intercept_pred_avg)
+np.save(dir + 'data_figures/' + fig + '/intercept_CI_model', intercept_pred_CI)
 
 ############################################################################
 ############################################################### PLOT RESULTS

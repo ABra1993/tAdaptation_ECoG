@@ -45,7 +45,7 @@ stim_cat = np.loadtxt(dir+'variables/cond_stim.txt', dtype=str)
 sf_labels = ['sf_bodies', 'sf_buildings', 'sf_faces', 'sf_objects', 'sf_scenes', 'sf_scrambled']
 
 # electrode coordinates
-electrodes_visuallyResponsive = pd.read_csv(dir+'subject_data/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
+electrodes_visuallyResponsive = pd.read_csv(dir+'data_subjects/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
 n_electrodes = len(electrodes_visuallyResponsive)
 
 # extract electrode indices per visual area (i.e. V1-V3, LOTC, VOTC)
@@ -157,6 +157,9 @@ fontsize_legend = 17
 # plt.close()
 # # plt.show()
 
+# save data
+np.save(dir + '/data_figures/SFig1/r2_avg', r2_values_avg)
+np.save(dir + '/data_figures/SFig1/r2_CI', r2_values_variance)
 
 # plot cross validation
 fig, ax = plt.subplots(1, len(VA), figsize=(12, 6))

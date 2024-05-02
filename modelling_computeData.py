@@ -35,9 +35,9 @@ trial_type = ['onepulse', 'twopulse_repeat']
 
 # import electrodes
 if electrode_type == 'visuallyResponsive':
-    responsive_electrodes = pd.read_csv(dir+'subject_data/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
+    responsive_electrodes = pd.read_csv(dir+'data_subjects/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
 elif electrode_type == 'categorySelective':
-     responsive_electrodes = pd.read_csv(dir+'subject_data/electrodes_categorySelective_0-5.txt', header=0, index_col=0, delimiter=' ')
+     responsive_electrodes = pd.read_csv(dir+'data_subjects/electrodes_categorySelective_0-5.txt', header=0, index_col=0, delimiter=' ')
 n_electrodes = len(responsive_electrodes)
 
 # create dataframe
@@ -73,13 +73,13 @@ for i in range(n_electrodes):
         current_subject = subject
 
         # import info
-        events = pd.read_csv(dir+'subject_data/' + subject + '/events.txt', header=0)
+        events = pd.read_csv(dir+'data_subjects/' + subject + '/events.txt', header=0)
 
         # import excluded trials
-        excluded_epochs = pd.read_csv(dir+'subject_data/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
+        excluded_epochs = pd.read_csv(dir+'data_subjects/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
 
     # import broadband timecourses
-    epochs_b = pd.read_csv(dir+'subject_data/' + subject + '/epochs_b/epochs_b_channel' + str(electrode_idx+1) + '_baselineCorrection.txt', sep=' ', header=None)
+    epochs_b = pd.read_csv(dir+'data_subjects/' + subject + '/epochs_b/epochs_b_channel' + str(electrode_idx+1) + '_baselineCorrection.txt', sep=' ', header=None)
     index_epochs = [j for j in range(len(events)) if excluded_epochs.iloc[i, j] == 1]
     epochs_b.iloc[:, index_epochs] = np.nan
 

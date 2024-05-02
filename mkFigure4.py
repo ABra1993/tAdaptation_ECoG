@@ -86,7 +86,7 @@ colors_VA           = [[233, 167, 0], [48, 64, 141], [187, 38, 102]]
 VA_n                = np.zeros(len(VA), dtype=int)
 
 # electrode coordinates
-electrodes_visuallyResponsive = pd.read_csv(dir+'subject_data/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
+electrodes_visuallyResponsive = pd.read_csv(dir+'data_subjects/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
 n_electrodes = len(electrodes_visuallyResponsive)
 
 # extract electrode indices per visual area (i.e. V1-V3, LOTC, VOTC)
@@ -196,7 +196,7 @@ for key, value in VA_name_idx.items():
             _, events, channels, _ = import_info(subject, dir)
 
             # import excluded trials
-            excluded_epochs = pd.read_csv(dir+'subject_data/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
+            excluded_epochs = pd.read_csv(dir+'data_subjects/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
         
         # determine preferred image category
         epochs_b = import_epochs(subject, electrode_idx, dir)
@@ -369,6 +369,35 @@ for key, value in VA_name_idx.items():
 
     # increment count
     count_VA+=1
+
+# save data
+if img_type == 'all':
+    np.save(dir + 'data_figures/Fig4/ttp_avg', ttp_avg)
+    np.save(dir + 'data_figures/Fig4/ttp_CI', ttp_CI)
+
+    np.save(dir + 'data_figures/Fig4/ttp_avg_model', ttp_avg_pred)
+    np.save(dir + 'data_figures/Fig4/ttp_CI_model', ttp_CI_pred)
+
+    np.save(dir + 'data_figures/Fig4/fwhm_avg', fwhm_avg)
+    np.save(dir + 'data_figures/Fig4/fwhm_CI', fwhm_CI)
+
+    np.save(dir + 'data_figures/Fig4/fwhm_avg_model', fwhm_avg_pred)
+    np.save(dir + 'data_figures/Fig4/fwhm_CI_model', fwhm_CI_pred)
+
+else:
+
+    np.save(dir + 'data_figures/SFig2/' + img_type + '_ttp_avg', ttp_avg)
+    np.save(dir + 'data_figures/SFig2/' + img_type + '_tttp_CI', ttp_CI)
+
+    np.save(dir + 'data_figures/SFig2/' + img_type + '_tttp_avg_model', ttp_avg_pred)
+    np.save(dir + 'data_figures/SFig2/' + img_type + '_tttp_CI_model', ttp_CI_pred)
+
+    np.save(dir + 'data_figures/SFig2/' + img_type + '_tfwhm_avg', fwhm_avg)
+    np.save(dir + 'data_figures/SFig2/' + img_type + '_tfwhm_CI', fwhm_CI)
+
+    np.save(dir + 'data_figures/SFig2/' + img_type + '_tfwhm_avg_model', fwhm_avg_pred)
+    np.save(dir + 'data_figures/SFig2/' + img_type + '_tfwhm_CI_model', fwhm_CI_pred)
+
 
 ############################################################################
 ################################################################## VISUALIZE

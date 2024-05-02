@@ -27,13 +27,13 @@ start_stimulus = timepoints_onepulse[0, 0]
 for subject in subjects:
     
     # import data and remove excluded epochs
-    t                       = pd.read_csv(dir+'subject_data/' + subject + '/t.txt', header=None)
-    events                  = pd.read_csv(dir+'subject_data/' + subject + '/events.txt', header=0)
-    channels                = pd.read_csv(dir+'subject_data/' + subject + '/channels.txt', header=0)
-    electrodes              = pd.read_csv(dir+'subject_data/' + subject + '/electrodes.txt', header=0)
+    t                       = pd.read_csv(dir+'data_subjects/' + subject + '/t.txt', header=None)
+    events                  = pd.read_csv(dir+'data_subjects/' + subject + '/events.txt', header=0)
+    channels                = pd.read_csv(dir+'data_subjects/' + subject + '/channels.txt', header=0)
+    electrodes              = pd.read_csv(dir+'data_subjects/' + subject + '/electrodes.txt', header=0)
 
     # import excluded epochs
-    excluded_epochs = pd.read_csv(dir+'subject_data/' + subject + '/excluded_epochs.txt', sep=' ', header=0, index_col=0, dtype=int)
+    excluded_epochs = pd.read_csv(dir+'data_subjects/' + subject + '/excluded_epochs.txt', sep=' ', header=0, index_col=0, dtype=int)
 
     # determine number of runs
     runs = events.stim_file.unique()
@@ -51,7 +51,7 @@ for subject in subjects:
 
         # import broadband timecourses
         # fig, axs = plt.subplots(1, 2)
-        epochs_b = pd.read_csv(dir+'subject_data/' + subject + '/epochs_b/epochs_b_channel' + str(i+1) + '.txt', sep=',', header=None)
+        epochs_b = pd.read_csv(dir+'data_subjects/' + subject + '/epochs_b/epochs_b_channel' + str(i+1) + '.txt', sep=',', header=None)
         # axs[0].plot(epochs_b, label='no excl. epochs')
         index_epochs = [j for j in range(len(events)) if excluded_epochs.iloc[i, j] == 1]
         epochs_b.iloc[:, index_epochs] = np.nan
@@ -80,4 +80,4 @@ for subject in subjects:
         # plt.close()
         
         # save baseline-corrected timecourse
-        np.savetxt(dir+'subject_data/' + subject + '/epochs_b/epochs_b_channel' + str(i+1) + '_baselineCorrection.txt', epochs_b)
+        np.savetxt(dir+'data_subjects/' + subject + '/epochs_b/epochs_b_channel' + str(i+1) + '_baselineCorrection.txt', epochs_b)

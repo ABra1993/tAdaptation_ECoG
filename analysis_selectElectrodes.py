@@ -45,20 +45,20 @@ if electrode_type == 'visualllyResponsive':
     for subject in subjects:
 
         # import data and remove excluded epochs
-        t                       = pd.read_csv(dir+'subject_data/' + subject + '/t.txt', header=None)
-        events                  = pd.read_csv(dir+'subject_data/' + subject + '/events.txt', header=0)
-        channels                = pd.read_csv(dir+'subject_data/' + subject + '/channels.txt', header=0)
-        electrodes              = pd.read_csv(dir+'subject_data/' + subject + '/electrodes.txt', header=0)
+        t                       = pd.read_csv(dir+'data_subjects/' + subject + '/t.txt', header=None)
+        events                  = pd.read_csv(dir+'data_subjects/' + subject + '/events.txt', header=0)
+        channels                = pd.read_csv(dir+'data_subjects/' + subject + '/channels.txt', header=0)
+        electrodes              = pd.read_csv(dir+'data_subjects/' + subject + '/electrodes.txt', header=0)
 
         # import coordintes
         column_names = ['x', 'y', 'z', 'type', 'nan']
-        coordinates  = pd.read_csv(dir+'subject_data/' + subject + '/coordinates.txt', delimiter=' ', names=['electrode', 'x', 'y', 'z', 'type'], index_col=False)
+        coordinates  = pd.read_csv(dir+'data_subjects/' + subject + '/coordinates.txt', delimiter=' ', names=['electrode', 'x', 'y', 'z', 'type'], index_col=False)
         
         # determine number of channels
         n_electrodes = len(channels)
 
         # import excluded epochs
-        excluded_epochs = pd.read_csv(dir+'subject_data/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
+        excluded_epochs = pd.read_csv(dir+'data_subjects/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
 
         # select events
         event_idx = select_events(events=events, cond=None, trial='onepulse', dir=dir)
@@ -71,7 +71,7 @@ if electrode_type == 'visualllyResponsive':
             electrode_name = electrodes.name[i]
 
             # import broadband timecourses
-            epochs_b = pd.read_csv(dir+'subject_data/' + subject + '/epochs_b/epochs_b_channel' + str(i+1) + '_baselineCorrection.txt', sep=' ', header=None)
+            epochs_b = pd.read_csv(dir+'data_subjects/' + subject + '/epochs_b/epochs_b_channel' + str(i+1) + '_baselineCorrection.txt', sep=' ', header=None)
             index_epochs = [j for j in range(len(events)) if excluded_epochs.iloc[i, j] == 1]
             epochs_b.iloc[:, index_epochs] = np.nan
 
@@ -154,7 +154,7 @@ if electrode_type == 'visualllyResponsive':
                 count+=1
 
     # save dataframe
-    df.to_csv(dir+'subject_data/electrodes_visuallyResponsive.txt', index=True, sep=' ')
+    df.to_csv(dir+'data_subjects/electrodes_visuallyResponsive.txt', index=True, sep=' ')
 
     # print count
     print(count, ' electrodes selected!')
@@ -182,20 +182,20 @@ elif electrode_type == 'categorySelective':
     for subject in subjects:
 
         # import data and remove excluded epochs
-        t                       = pd.read_csv(dir+'subject_data/' + subject + '/t.txt', header=None)
-        events                  = pd.read_csv(dir+'subject_data/' + subject + '/events.txt', header=0)
-        channels                = pd.read_csv(dir+'subject_data/' + subject + '/channels.txt', header=0)
-        electrodes              = pd.read_csv(dir+'subject_data/' + subject + '/electrodes.txt', header=0)
+        t                       = pd.read_csv(dir+'data_subjects/' + subject + '/t.txt', header=None)
+        events                  = pd.read_csv(dir+'data_subjects/' + subject + '/events.txt', header=0)
+        channels                = pd.read_csv(dir+'data_subjects/' + subject + '/channels.txt', header=0)
+        electrodes              = pd.read_csv(dir+'data_subjects/' + subject + '/electrodes.txt', header=0)
 
         # import coordintes
         column_names = ['x', 'y', 'z', 'type', 'nan']
-        coordinates  = pd.read_csv(dir+'subject_data/' + subject + '/coordinates.txt', delimiter=' ', names=['electrode', 'x', 'y', 'z', 'type'], index_col=False)
+        coordinates  = pd.read_csv(dir+'data_subjects/' + subject + '/coordinates.txt', delimiter=' ', names=['electrode', 'x', 'y', 'z', 'type'], index_col=False)
         
         # determine number of channels
         n_electrodes = len(channels)
 
         # import excluded epochs
-        excluded_epochs = pd.read_csv(dir+'subject_data/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
+        excluded_epochs = pd.read_csv(dir+'data_subjects/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
 
         # select events
         event_idx = select_events(events=events, cond='STIM', trial='onepulse', dir=dir)
@@ -208,7 +208,7 @@ elif electrode_type == 'categorySelective':
             electrode_name = electrodes.name[i]
 
             # import broadband timecourses
-            epochs_b = pd.read_csv(dir+'subject_data/' + subject + '/epochs_b/epochs_b_channel' + str(i+1) + '_baselineCorrection.txt', sep=' ', header=None)
+            epochs_b = pd.read_csv(dir+'data_subjects/' + subject + '/epochs_b/epochs_b_channel' + str(i+1) + '_baselineCorrection.txt', sep=' ', header=None)
             index_epochs = [j for j in range(len(events)) if excluded_epochs.iloc[i, j] == 1]
             epochs_b.iloc[:, index_epochs] = np.nan
 
@@ -317,7 +317,7 @@ elif electrode_type == 'categorySelective':
                     count+=1
 
     # save dataframe
-    df.to_csv(dir+'subject_data/electrodes_categorySelective_' + str(threshold_d_prime).replace('.', '-') + '.txt', index=True, sep=' ')
+    df.to_csv(dir+'data_subjects/electrodes_categorySelective_' + str(threshold_d_prime).replace('.', '-') + '.txt', index=True, sep=' ')
 
     # print count
     print(count, ' electrodes selected!')

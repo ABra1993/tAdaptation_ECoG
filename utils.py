@@ -30,10 +30,10 @@ def import_info(subject, dir):
         """
 
     # read files
-    t = pd.read_csv(dir + 'subject_data/' + subject + '/t.txt', header=None)
-    events = pd.read_csv(dir + 'subject_data/' + subject + '/events.txt', header=0)
-    channels = pd.read_csv(dir + 'subject_data/' + subject + '/channels.txt', header=0)
-    electrodes = pd.read_csv(dir + 'subject_data/' + subject + '/electrodes.txt', header=0)
+    t = pd.read_csv(dir + 'data_subjects/' + subject + '/t.txt', header=None)
+    events = pd.read_csv(dir + 'data_subjects/' + subject + '/events.txt', header=0)
+    channels = pd.read_csv(dir + 'data_subjects/' + subject + '/channels.txt', header=0)
+    electrodes = pd.read_csv(dir + 'data_subjects/' + subject + '/electrodes.txt', header=0)
 
     return t, events, channels, electrodes
 
@@ -59,10 +59,10 @@ def import_epochs(subject, electrode_idx, dir):
     # os.chdir(dir+'Documents/ECoG_MATLAB/' + subject + '/epochs_b/')
     epochs_b = []
     if type(electrode_idx) == int:                                              # import data single electrode
-        epochs_b = pd.read_csv(dir+'subject_data/' + subject + '/epochs_b/epochs_b_channel' + str(electrode_idx + 1) + '_baselineCorrection.txt', delimiter=' ', header=None)
+        epochs_b = pd.read_csv(dir+'data_subjects/' + subject + '/epochs_b/epochs_b_channel' + str(electrode_idx + 1) + '_baselineCorrection.txt', delimiter=' ', header=None)
     else:                                                                       # import data multiple electrodes
         for i in range(len(electrode_idx)):
-            temp = pd.read_csv(dir+'subject_data/' + subject + '/epochs_b/epochs_b_channel' + str(electrode_idx[i] + 1) + '_baselineCorrection.txt', delimiter=' ', header=None)
+            temp = pd.read_csv(dir+'data_subjects/' + subject + '/epochs_b/epochs_b_channel' + str(electrode_idx[i] + 1) + '_baselineCorrection.txt', delimiter=' ', header=None)
             epochs_b.append(temp)
 
     return epochs_b

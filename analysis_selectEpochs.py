@@ -31,9 +31,9 @@ for idx, subject in enumerate(subjects):
     print('Data selection for ', subject, '...')
     
     # import data
-    events              = pd.read_csv(dir+'subject_data/' + subject + '/events.txt', header=0)
-    channels            = pd.read_csv(dir+'subject_data/' + subject + '/channels.txt', header=0)
-    electrodes          = pd.read_csv(dir+'subject_data/' + subject + '/electrodes.txt', header=0)
+    events              = pd.read_csv(dir+'data_subjects/' + subject + '/events.txt', header=0)
+    channels            = pd.read_csv(dir+'data_subjects/' + subject + '/channels.txt', header=0)
+    electrodes          = pd.read_csv(dir+'data_subjects/' + subject + '/electrodes.txt', header=0)
 
     # select epochs based on broadband or voltage data
     n_epochs = len(events)
@@ -46,7 +46,7 @@ for idx, subject in enumerate(subjects):
         electrode_name = electrodes.name[i]
 
         # import broadband timecourses
-        epochs_b = pd.read_csv(dir+'subject_data/' + subject + '/epochs_b/epochs_b_channel' + str(i+1) + '.txt', sep=',', header=None).to_numpy()
+        epochs_b = pd.read_csv(dir+'data_subjects/' + subject + '/epochs_b/epochs_b_channel' + str(i+1) + '.txt', sep=',', header=None).to_numpy()
 
         # maximal value
         max_values = np.amax(epochs_b, axis=0)
@@ -66,7 +66,7 @@ for idx, subject in enumerate(subjects):
 
     # save excluded epochs
     pd_save = pd.DataFrame(excluded_epochs_all)
-    pd_save.to_csv(dir+'subject_data/' + subject + '/excluded_epochs.txt', sep=' ', index=True)
+    pd_save.to_csv(dir+'data_subjects/' + subject + '/excluded_epochs.txt', sep=' ', index=True)
 
 # print average exclusion percentage over all subjects
 print('Average exclusion over all subjects: ', np.mean(excl_perc_all)*100)

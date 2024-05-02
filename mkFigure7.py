@@ -75,7 +75,7 @@ VA_n = np.zeros(len(VA))  # number of electrodes
 colors_VA = [[233, 167, 0], [48, 64, 141], [187, 38, 102]]
 
 # electrode coordinates
-electrodes_visuallyResponsive = pd.read_csv(dir+'subject_data/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
+electrodes_visuallyResponsive = pd.read_csv(dir+'data_subjects/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
 n_electrodes = len(electrodes_visuallyResponsive)
 
 # extract electrode indices per visual area (i.e. V1-V3, LOTC, VOTC)
@@ -211,7 +211,7 @@ for key, value in VA_name_idx.items():
             event_idx = select_events(events, 'TEMP', 'onepulse', dir)
 
             # import excluded trials
-            excluded_epochs = pd.read_csv(dir+'subject_data/' + subject + '/excluded_epochs.txt', sep=' ', header=0, dtype=int)
+            excluded_epochs = pd.read_csv(dir+'data_subjects/' + subject + '/excluded_epochs.txt', sep=' ', header=0, dtype=int)
 
         # extract data
         epochs_b = import_epochs(subject, electrode_idx, dir)
@@ -256,6 +256,10 @@ for key, value in VA_name_idx.items():
         ax_param[i].plot([count_VA, count_VA], [CI_temp[0], CI_temp[1]], color=np.array(colors_VA[count_VA])/255, zorder=-1)
         ax_param[i].scatter(count_VA, avg_temp, color=np.array(colors_VA[count_VA])/255, edgecolor='white', s=150)
         ax_param[i].set_xlim(-0.5, 2.5)
+
+        # save
+        np.save(dir + 'data_figures/Fig7/' + key + '_' + param_names[i] + '_avg', avg_temp)
+        np.save(dir + 'data_figures/Fig7/' + key + '_' + param_names[i] + '_CI', CI_temp)
 
     # perform bootstrap over broadband timecourse
     for i in range(B_repetitions):
@@ -404,7 +408,7 @@ for key, value in VA_name_idx.items():
             event_idx = select_events(events, 'TEMP', 'twopulse_repeat', dir)
 
             # import excluded trials
-            excluded_epochs = pd.read_csv(dir+'subject_data/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
+            excluded_epochs = pd.read_csv(dir+'data_subjects/' + subject + '/excluded_epochs.txt', sep=' ', index_col=0, header=0, dtype=int)
 
         # extract data
         epochs_b = import_epochs(subject, electrode_idx, dir)

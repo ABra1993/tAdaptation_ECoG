@@ -229,4 +229,4 @@ ax['ISI_recovery'].set_xticklabels(label_ISI, rotation=45, fontsize=fontsize_lab
 plt.tight_layout()
 plt.savefig(dir+'mkFigure/SuppFig2.svg', format='svg')
 plt.savefig(dir+'mkFigure/SuppFig2', dpi=300) 
-plt.show()
+# plt.show()

@@ -38,11 +38,11 @@ dir_surfdrive = file.readline()
 view = ['lat', 'ven', 'caudal']
 
 # electrode coordinates
-electrodes_visuallyResponsive = pd.read_csv(dir+'subject_data/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
+electrodes_visuallyResponsive = pd.read_csv(dir+'data_subjects/electrodes_visuallyResponsive_manuallyAssigned.txt', header=0, index_col=0, delimiter=' ')
 n_electrodes = len(electrodes_visuallyResponsive)
 
 threshold_d_prime = 1.0
-electrodes_categorySelective = pd.read_csv(dir+'subject_data/electrodes_categorySelective_' + str(threshold_d_prime).replace('.', '-') + '.txt', header=0, index_col=0, delimiter=' ')
+electrodes_categorySelective = pd.read_csv(dir+'data_subjects/electrodes_categorySelective_' + str(threshold_d_prime).replace('.', '-') + '.txt', header=0, index_col=0, delimiter=' ')
 print('Total number of category-selective electrodes: ', len(electrodes_categorySelective[electrodes_categorySelective.preferred_cat != 'SCRAMBLED']))
 
 # initiate colours
