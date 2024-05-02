@@ -1,7 +1,7 @@
-# Temporal dynamics of neural adaptation across human visual cortex
+# Temporal dynamics of short-term neural adaptation across human visual cortex
 This repository is included in the following paper:
 
-**Temporal dynamics of neural adaptation across human visual cortex (2023). A. M. Brands et al, bioRxiv**
+**Temporal dynamics of short-term neural adaptation across human visual cortex (2023). A. M. Brands et al, bioRxiv**
 
 and contains data analysis of intracranial electroencephalography (iEEG) data with the goal to investigate how neural responses adapt to prolonged and repeated stimulus presentations across the human visual cortex. In addition, to investigate the neural computations underlying adaptation, responses are predicted using a model of delayed divisive normalization (DN).
 
