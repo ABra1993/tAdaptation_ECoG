@@ -12,7 +12,7 @@ for j = 1:length(subjects)
     subject = subjects{j};
     fprintf(strcat('Computing for', 32,  subject, '...\n'));
     
-    dirSave_subject = strcat('/Users/a.m.brandsuva.nl/Library/CloudStorage/OneDrive-UvA/code/git_nAdaptation_ECoG/subject_data/', subject);
+    dirSave_subject = strcat(dirSave, subject);
 
     FileName = strcat(dirData, subject, '_data_nobaselinecorrection.mat');
     FileData = load(FileName);
