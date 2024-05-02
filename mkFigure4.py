@@ -734,13 +734,6 @@ for i in range(2):
             else:
                 print('VOTC vs. LOTC: ', p)
 
-# save figure
-plt.tight_layout()
-plt.savefig(dir+'mkFigure/Fig4_' + img_type + '_TTC19.svg', format='svg', bbox_inches='tight')
-plt.savefig(dir+'mkFigure/Fig4_' + img_type + '_TTC19', dpi=300, bbox_inches='tight')
-# plt.savefig(dir+'mkFigure/Fig4_' + img_type + '.svg', format='svg', bbox_inches='tight')
-# plt.savefig(dir+'mkFigure/Fig4_' + img_type, dpi=300, bbox_inches='tight')
-# plt.show()
 
 
 

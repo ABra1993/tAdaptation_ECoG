@@ -33,8 +33,8 @@ print(dir)
 
 # specifiy the trial types
 img_type = 'all'
-img_type = 'preferred'
-img_type = 'nonpreferred'
+# img_type = 'preferred'
+# img_type = 'nonpreferred'
 
 ##############################################################################################################
 ##############################################################################################################
@@ -811,6 +811,7 @@ ax['ISI_recovery_pred'].legend([(vertical_line1, marker_pred[0], line[0]), (vert
 plt.tight_layout()
 plt.savefig(dir+'mkFigure/Fig5_6_' + img_type + '.svg', format='svg', bbox_inches='tight')
 plt.savefig(dir+'mkFigure/Fig5_6_' + img_type, dpi=300, bbox_inches='tight')
+
 # plt.show()
 
 ############################################################################
