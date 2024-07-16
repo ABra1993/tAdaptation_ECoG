@@ -5,7 +5,7 @@ This repository is included in the following paper:
 
 and contains data analysis of intracranial electroencephalography (iEEG) data with the goal to investigate how neural responses adapt to prolonged and repeated stimulus presentations across the human visual cortex. In addition, to investigate the neural computations underlying adaptation, responses are predicted using a model of delayed divisive normalization (DN).
 
-The neural data that is required for the analyzing, modelling and creating of the figures will be made available later.
+All code used for the purpose of this paper can be found at this GitHub repository and https://github.com/WinawerLab/ECoG_utils. Raw and processed iEEG data are publicly available as part of the ‘Visual ECoG dataset’ on OpenNeuro ( https://openneuro.org/datasets/ds004194).
 
 Structure
 ------------
